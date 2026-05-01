@@ -52,6 +52,17 @@ export default function ConnectionsPage() {
       ),
     },
     {
+      key: "showPrices",
+      header: "إظهار الأسعار",
+      render: (row) => (
+        <span className={cn("px-2 py-1 text-xs rounded-full", 
+          row.showPrices ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+        )}>
+          {row.showPrices ? 'مفعل' : 'معطل'}
+        </span>
+      ),
+    },
+    {
       key: "createdAt",
       header: "التاريخ",
       render: (row) => <span>{formatDate(row.createdAt)}</span>,

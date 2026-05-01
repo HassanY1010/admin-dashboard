@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import adminApi from "@/lib/admin-api";
 import { DataTable, Column } from "@/components/data-table";
-import { formatDate } from "@/lib/utils";
+import { formatDate, cn } from "@/lib/utils";
 import { MoreVertical } from "lucide-react";
 import type { User } from "@/types/api";
 
@@ -52,10 +52,12 @@ export default function UsersPage() {
     },
     {
       key: "userType",
-      header: "النوع",
+      header: "نوع الحساب",
       render: (row) => (
-        <span className="text-sm">
-          {row.userType === "business" ? "شركة" : "فردي"}
+        <span className={cn("px-2 py-1 text-xs rounded-full", 
+          row.userType === "business" ? "bg-purple-100 text-purple-700" : "bg-cyan-100 text-cyan-700"
+        )}>
+          {row.userType === "business" ? "تاجر (Merchant)" : "مستهلك (Consumer)"}
         </span>
       ),
     },

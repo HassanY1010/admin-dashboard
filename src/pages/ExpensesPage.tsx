@@ -31,6 +31,11 @@ export default function ExpensesPage() {
 
   const columns: Column<any>[] = [
     {
+      key: "user",
+      header: "المستخدم",
+      render: (row) => <span className="text-sm">{row.user?.fullName}</span>,
+    },
+    {
       key: "description",
       header: "الوصف",
       render: (row) => <span className="font-medium">{row.description}</span>,
