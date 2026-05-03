@@ -1,107 +1,186 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import adminApi from "@/lib/admin-api";
 import { DataTable, Column } from "@/components/data-table";
 import { formatDate, cn } from "@/lib/utils";
-import { MoreVertical } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { 
+  UserX, 
+  UserCheck, 
+  Key, 
+  Send, 
+  CalendarPlus,
+  RefreshCcw
+} from "lucide-react";
 import type { User } from "@/types/api";
 
 export default function UsersPage() {
-
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showNotifyDialog, setShowNotifyDialog] = useState(false);
+  const [notificationBody, setNotificationBody] = useState("");
+  const [notificationTitle, setNotificationTitle] = useState("تنبيه من الإدارة");
+  
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
 
-  const fetchUsers = async (pageNum: number = 1, searchQuery: string = "") => {
-    setLoading(true);
-    try {
-      const params: any = { page: pageNum, limit: 10 };
-      if (searchQuery) params.search = searchQuery;
-      const data = await adminApi.getUsers(params);
-      setUsers(data.data);
-      setTotal(data.meta.total);
-    } catch (error) {
-      console.error("Failed to fetch users:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data, isLoading } = useQuery({
+    queryKey: ["users", page, search],
+    queryFn: () => adminApi.getUsers({ page, limit: 10, search }),
+  });
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const toggleStatusMutation = useMutation({
+    mutationFn: (user: User) => 
+      adminApi.toggleUserStatus(user.id, !user.isActive),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      toast.success("تم تحديث حالة المستخدم بنجاح");
+    },
+    onError: () => toast.error("فشل في تحديث الحالة"),
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: (userId: string) => adminApi.resetUserPassword(userId),
+    onSuccess: (data) => {
+      toast.success(data.message || "تم إعادة تعيين كلمة المرور بنجاح");
+    },
+    onError: () => toast.error("فشل في إعادة تعيين كلمة المرور"),
+  });
+
+  const extendSubscriptionMutation = useMutation({
+    mutationFn: (businessId: string) => adminApi.extendSubscription(businessId),
+    onSuccess: () => {
+      toast.success("تم تمديد الاشتراك لمدة سنة");
+    },
+    onError: () => toast.error("فشل في تمديد الاشتراك (قد لا يملك المستخدم شركة)"),
+  });
+
+  const sendNotificationMutation = useMutation({
+    mutationFn: () => 
+      adminApi.sendNotification(selectedUser!.id, notificationTitle, notificationBody),
+    onSuccess: () => {
+      setShowNotifyDialog(false);
+      setNotificationBody("");
+      toast.success("تم إرسال الإشعار بنجاح");
+    },
+    onError: () => toast.error("فشل في إرسال الإشعار"),
+  });
 
   const columns: Column<User>[] = [
     {
       key: "fullName",
-      header: "الاسم",
+      header: "المستخدم",
       render: (row) => (
         <div>
           <p className="font-medium">{row.fullName}</p>
-          <p className="text-xs text-muted-foreground">{row.email}</p>
+          <p className="text-xs text-muted-foreground">{row.email || row.phoneNumber}</p>
         </div>
       ),
     },
     {
-      key: "phoneNumber",
-      header: "رقم الهاتف",
-    },
-    {
       key: "userType",
-      header: "نوع الحساب",
+      header: "النوع",
       render: (row) => (
-        <span className={cn("px-2 py-1 text-xs rounded-full", 
-          row.userType === "business" ? "bg-purple-100 text-purple-700" : "bg-cyan-100 text-cyan-700"
+        <Badge className={cn(
+          row.userType === "business" ? "bg-purple-50 text-purple-700" : "bg-blue-50 text-blue-700"
         )}>
-          {row.userType === "business" ? "تاجر (Merchant)" : "مستهلك (Consumer)"}
-        </span>
-      ),
-    },
-    {
-      key: "role",
-      header: "الدور",
-      render: (row) => (
-        <span className="px-2 py-1 text-xs rounded-full bg-primary/10">
-          {row.role === "SUPER_ADMIN"
-            ? "مدير عام"
-            : row.role === "ADMIN"
-            ? "مدير"
-            : "دعم"}
-        </span>
+          {row.userType === "business" ? "تاجر" : "مستهلك"}
+        </Badge>
       ),
     },
     {
       key: "isActive",
       header: "الحالة",
       render: (row) => (
-        <span
-          className={`px-2 py-1 text-xs rounded-full ${
-            row.isActive
-              ? "bg-green-100 text-green-700"
-              : "bg-red-100 text-red-700"
-          }`}
-        >
+        <Badge className={row.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
           {row.isActive ? "نشط" : "معطل"}
-        </span>
+        </Badge>
       ),
     },
     {
       key: "createdAt",
-      header: "تاريخ التسجيل",
+      header: "تاريخ الانضمام",
       render: (row) => <span className="text-sm">{formatDate(row.createdAt)}</span>,
     },
     {
       key: "actions",
-      header: "",
-      className: "w-10",
-      render: () => (
-        <button className="p-2 rounded-md hover:bg-muted">
-          <MoreVertical className="w-4 h-4" />
-        </button>
+      header: "الإجراءات",
+      className: "w-fit",
+      render: (row) => (
+        <div className="flex gap-2">
+          {/* Toggle Status */}
+          <Button
+            size="sm"
+            variant="outline"
+            className={row.isActive ? "text-red-600 border-red-200" : "text-green-600 border-green-200"}
+            onClick={() => toggleStatusMutation.mutate(row)}
+            disabled={toggleStatusMutation.isPending}
+            title={row.isActive ? "تعطيل الحساب" : "تفعيل الحساب"}
+          >
+            {row.isActive ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+          </Button>
+
+          {/* Reset Password */}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              if (confirm("هل أنت متأكد من إعادة تعيين كلمة المرور لهذا المستخدم؟")) {
+                resetPasswordMutation.mutate(row.id);
+              }
+            }}
+            disabled={resetPasswordMutation.isPending}
+            title="إعادة تعيين كلمة المرور"
+          >
+            <Key className="h-4 w-4" />
+          </Button>
+
+          {/* Extend Subscription (Only for businesses) */}
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-purple-600 border-purple-200"
+            onClick={() => {
+              if (row.business?.id) {
+                if (confirm("هل أنت متأكد من تمديد الاشتراك سنة لهذا التاجر؟")) {
+                  extendSubscriptionMutation.mutate(row.business.id);
+                }
+              } else {
+                toast.error("هذا المستخدم ليس لديه شركة مرتبطة");
+              }
+            }}
+            title="تمديد الاشتراك سنة"
+          >
+            <CalendarPlus className="h-4 w-4" />
+          </Button>
+
+          {/* Send Notification */}
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-blue-600 border-blue-200"
+            onClick={() => {
+              setSelectedUser(row);
+              setShowNotifyDialog(true);
+            }}
+            title="إرسال إشعار"
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
       ),
     },
   ];
@@ -110,29 +189,65 @@ export default function UsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">المستخدمين</h1>
-          <p className="text-muted-foreground">إدارة مستخدمي النظام</p>
+          <h1 className="text-2xl font-bold">إدارة المستخدمين</h1>
+          <p className="text-muted-foreground">التحكم في حسابات المستخدمين والاشتراكات</p>
         </div>
+        <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ["users"] })}>
+          <RefreshCcw className="h-4 w-4 ml-2" />
+          تحديث
+        </Button>
       </div>
 
       <DataTable
-        data={users}
+        data={data?.data || []}
         columns={columns}
-        loading={loading}
+        loading={isLoading}
         page={page}
         limit={10}
-        total={total}
-        onPageChange={(p) => {
-          setPage(p);
-          fetchUsers(p, search);
-        }}
-        searchPlaceholder="بحث بالاسم أو البريد..."
-        onSearch={(q) => {
-          setSearch(q);
-          setPage(1);
-          fetchUsers(1, q);
-        }}
+        total={data?.meta?.total || 0}
+        onPageChange={setPage}
+        searchPlaceholder="بحث بالاسم، الهاتف، أو البريد..."
+        onSearch={setSearch}
       />
+
+      {/* Notification Dialog */}
+      <Dialog open={showNotifyDialog} onOpenChange={setShowNotifyDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>إرسال إشعار للمستخدم</DialogTitle>
+            <DialogDescription>
+              سيصل هذا الإشعار مباشرة إلى تطبيق المستخدم: {selectedUser?.fullName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">العنوان</label>
+              <input 
+                className="w-full p-2 border rounded-md"
+                value={notificationTitle}
+                onChange={(e) => setNotificationTitle(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">محتوى الإشعار</label>
+              <Textarea
+                placeholder="اكتب رسالتك هنا..."
+                value={notificationBody}
+                onChange={(e) => setNotificationBody(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNotifyDialog(false)}>إلغاء</Button>
+            <Button 
+              onClick={() => sendNotificationMutation.mutate()} 
+              disabled={sendNotificationMutation.isPending || !notificationBody}
+            >
+              إرسال الآن
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

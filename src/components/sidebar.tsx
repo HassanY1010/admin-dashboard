@@ -17,12 +17,14 @@ import {
   Shield,
   LogOut,
   ChevronRight,
+  CreditCard,
 } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "لوحة التحكم", icon: LayoutDashboard },
   { href: "/dashboard/users", label: "المستخدمين", icon: Users },
   { href: "/dashboard/businesses", label: "الشركات", icon: Building2 },
+  { href: "/dashboard/subscriptions", label: "الاشتراكات", icon: CreditCard },
   { href: "/dashboard/orders", label: "الطلبات", icon: ShoppingCart },
   { href: "/dashboard/transactions", label: "المعاملات", icon: Receipt },
   { href: "/dashboard/connections", label: "الروابط", icon: Link2 },

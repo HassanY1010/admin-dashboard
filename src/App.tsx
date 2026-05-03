@@ -13,6 +13,7 @@ import ExpensesPage from './pages/ExpensesPage';
 import ReportsPage from './pages/ReportsPage';
 import NotificationsPage from './pages/NotificationsPage';
 import AuditLogsPage from './pages/AuditLogsPage';
+import SubscriptionsPage from './pages/SubscriptionsPage';
 import { useAuthStore } from './lib/auth-store';
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ function App() {
             <Route path="reports" element={<ReportsPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="audit-logs" element={<AuditLogsPage />} />
+            <Route path="subscriptions" element={<SubscriptionsPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

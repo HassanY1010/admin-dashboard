@@ -51,6 +51,11 @@ const adminApi = {
     return data;
   },
 
+  async resetUserPassword(userId: string): Promise<any> {
+    const { data } = await apiClient.put(`/admin/users/${userId}/reset-password`);
+    return data;
+  },
+
   // Businesses
   async getBusinesses(params: QueryParams = {}): Promise<PaginatedResponse<Business>> {
     const { data } = await apiClient.get("/admin/businesses", { params });
@@ -137,6 +142,32 @@ const adminApi = {
   // Reports
   async getFinancialReport(params: { startDate?: string; endDate?: string } = {}): Promise<FinancialReport> {
     const { data } = await apiClient.get("/admin/reports/financial", { params });
+    return data;
+  },
+
+  // Subscriptions
+  async getPendingSubscriptions(params: QueryParams = {}): Promise<PaginatedResponse<any>> {
+    const { data } = await apiClient.get("/subscriptions/pending-requests", { params });
+    return data;
+  },
+
+  async approveSubscription(requestId: string, notes?: string): Promise<any> {
+    const { data } = await apiClient.put("/subscriptions/approve", { requestId, notes });
+    return data;
+  },
+
+  async rejectSubscription(requestId: string, reason?: string): Promise<any> {
+    const { data } = await apiClient.put("/subscriptions/reject", { requestId, reason });
+    return data;
+  },
+
+  async extendSubscription(businessId: string): Promise<any> {
+    const { data } = await apiClient.post(`/subscriptions/extend/${businessId}`);
+    return data;
+  },
+
+  async getSubscriptionStats(): Promise<any> {
+    const { data } = await apiClient.get("/subscriptions/stats");
     return data;
   },
 };

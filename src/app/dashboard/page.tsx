@@ -4,18 +4,23 @@ import { useEffect, useState } from "react";
 import adminApi from "@/lib/admin-api";
 import { StatsCard } from "@/components/stats-card";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Users, Building2, ShoppingCart, DollarSign } from "lucide-react";
+import { Users, Building2, ShoppingCart, CreditCard } from "lucide-react";
 import type { DashboardStats } from "@/types/api";
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [subscriptionStats, setSubscriptionStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const data = await adminApi.getDashboardStats();
-        setStats(data);
+        const [dashboardData, subscriptionData] = await Promise.all([
+          adminApi.getDashboardStats(),
+          adminApi.getSubscriptionStats(),
+        ]);
+        setStats(dashboardData);
+        setSubscriptionStats(subscriptionData);
       } catch (error) {
         console.error("Failed to fetch dashboard stats:", error);
       } finally {
@@ -54,15 +59,15 @@ export default function DashboardPage() {
           className="hover:shadow-md transition-shadow"
         />
         <StatsCard
-          title="إجمالي الطلبات"
-          value={stats?.totalOrders || 0}
-          icon={ShoppingCart}
+          title="اشتراكات نشطة"
+          value={subscriptionStats?.activeSubscriptions || 0}
+          icon={CreditCard}
           className="hover:shadow-md transition-shadow"
         />
         <StatsCard
-          title="إجمالي الإيرادات"
-          value={formatCurrency(stats?.totalRevenue || "0")}
-          icon={DollarSign}
+          title="طلبات معلقة"
+          value={subscriptionStats?.pendingRequests || 0}
+          icon={ShoppingCart}
           className="hover:shadow-md transition-shadow"
         />
       </div>

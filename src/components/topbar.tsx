@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useAuthStore } from "@/lib/auth-store";
+import { useRealtimeNotifications } from "@/lib/use-realtime-notifications";
 
 import { Bell, Search, User, ChevronDown, Moon, Sun, Menu } from "lucide-react";
 
@@ -13,6 +14,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   const { user, logout } = useAuthStore();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const { unreadCount } = useRealtimeNotifications();
 
   const handleLogout = () => {
     logout();
@@ -41,7 +43,11 @@ export function Topbar({ onMenuClick }: TopbarProps) {
       <div className="flex items-center gap-2">
         <button className="relative p-2 rounded-md hover:bg-muted">
           <Bell className="w-5 h-5" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
+          {unreadCount > 0 && (
+            <span className="absolute top-1 right-1 flex items-center justify-center min-w-[18px] h-4 px-1 text-xs font-bold text-white bg-destructive rounded-full">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
         </button>
 
         <button
