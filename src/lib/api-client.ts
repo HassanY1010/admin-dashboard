@@ -3,7 +3,8 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 // @ts-ignore
 // Configuration for failover IPs
 const BASE_URLS = [
-  (import.meta as any).env.VITE_API_URL || "http://localhost:3000"
+  (import.meta as any).env.VITE_API_URL || "https://sales-app-backend-6o15.onrender.com",
+  "http://localhost:3000"
 ];
 
 let currentUrlIndex = 0;
