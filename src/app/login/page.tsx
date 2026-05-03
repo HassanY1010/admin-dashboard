@@ -9,8 +9,8 @@ import apiClient from "@/lib/api-client";
 export default function LoginPage() {
   const navigate = useNavigate();
   const { setAuth } = useAuthStore();
-  const [email, setEmail] = useState("admin@example.com");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin123@admin123.com");
+  const [password, setPassword] = useState("admin123");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -24,7 +24,10 @@ export default function LoginPage() {
       setAuth(data.user, data.accessToken);
       navigate("/dashboard");
     } catch (err: any) {
-      setError(err.response?.data?.message || "فشل تسجيل الدخول");
+      console.error("Login error:", err);
+      const data = err.response?.data;
+      const errorMessage = data?.message || err.message || "فشل تسجيل الدخول";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -67,7 +70,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full h-12 pr-10 pl-4 bg-muted rounded-md border-0 focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="admin@example.com"
+                  placeholder="admin123@admin123.com"
                   required
                 />
               </div>

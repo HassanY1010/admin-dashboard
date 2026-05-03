@@ -19,7 +19,7 @@ export const apiClient = axios.create({
 // Function to switch to the next available URL
 const rotateBaseUrl = () => {
   currentUrlIndex = (currentUrlIndex + 1) % BASE_URLS.length;
-  apiClient.defaults.baseURL = `${BASE_URLS[currentUrlIndex]}/api/v1/`;
+  apiClient.defaults.baseURL = `${BASE_URLS[currentUrlIndex]}/api/v1`;
   console.log(`Switched API Base URL to: ${BASE_URLS[currentUrlIndex]}`);
   return BASE_URLS[currentUrlIndex];
 };
