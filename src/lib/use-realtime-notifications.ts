@@ -28,7 +28,7 @@ export function useRealtimeNotifications() {
   useEffect(() => {
     if (!token) return;
 
-    const socket: Socket = io((import.meta as any).env.VITE_SOCKET_URL || (import.meta as any).env.VITE_API_URL || "http://localhost:3000", {
+    const socket: Socket = io((import.meta as any).env.VITE_SOCKET_URL || (import.meta as any).env.VITE_API_URL || "https://sales-app-backend-6o15.onrender.com", {
       auth: { token },
       transports: ["websocket"],
     });
