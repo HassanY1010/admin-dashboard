@@ -18,12 +18,13 @@ import {
   LogOut,
   ChevronRight,
   CreditCard,
+  MessageSquare,
 } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "لوحة التحكم", icon: LayoutDashboard },
-  { href: "/dashboard/users", label: "المستخدمين", icon: Users },
-  { href: "/dashboard/businesses", label: "الشركات", icon: Building2 },
+  { href: "/dashboard/merchants", label: "إدارة التجار", icon: Building2 },
+  { href: "/dashboard/consumers", label: "إدارة المستهلكين", icon: Users },
   { href: "/dashboard/subscriptions", label: "الاشتراكات", icon: CreditCard },
   { href: "/dashboard/orders", label: "الطلبات", icon: ShoppingCart },
   { href: "/dashboard/transactions", label: "المعاملات", icon: Receipt },
@@ -31,6 +32,7 @@ const navItems = [
   { href: "/dashboard/accounts", label: "الحسابات", icon: Wallet },
   { href: "/dashboard/expenses", label: "المصاريف", icon: FileText },
   { href: "/dashboard/reports", label: "التقارير", icon: Shield },
+  { href: "/dashboard/suggestions", label: "الشكاوى والاقتراحات", icon: MessageSquare },
   { href: "/dashboard/notifications", label: "الإشعارات", icon: Bell },
   { href: "/dashboard/audit-logs", label: "سجل العمليات", icon: Settings },
 ];

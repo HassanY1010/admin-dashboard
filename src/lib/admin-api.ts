@@ -12,6 +12,7 @@ import type {
   DashboardStats,
   PaginatedResponse,
   FinancialReport,
+  Suggestion,
 } from "@/types/api";
 
 export interface QueryParams {
@@ -161,13 +162,30 @@ const adminApi = {
     return data;
   },
 
-  async extendSubscription(businessId: string): Promise<any> {
-    const { data } = await apiClient.post(`/subscriptions/extend/${businessId}`);
+  async extendSubscription(businessId: string, days?: number): Promise<any> {
+    const { data } = await apiClient.post(`/subscriptions/extend/${businessId}`, { days });
     return data;
   },
 
   async getSubscriptionStats(): Promise<any> {
     const { data } = await apiClient.get("/subscriptions/stats");
+    return data;
+  },
+
+  // Suggestions
+  async getSuggestions(params: QueryParams = {}): Promise<PaginatedResponse<Suggestion>> {
+    const { data } = await apiClient.get("/admin/suggestions", { params });
+    return data;
+  },
+
+  async updateSuggestionStatus(id: string, status: string): Promise<Suggestion> {
+    const { data } = await apiClient.put(`/admin/suggestions/${id}/status`, { status });
+    return data;
+  },
+
+  // Notifications Count
+  async getNotificationsCount(params: { isRead?: boolean } = {}): Promise<{ count: number }> {
+    const { data } = await apiClient.get("/admin/notifications/count", { params });
     return data;
   },
 };

@@ -3,8 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import LoginPage from './pages/LoginPage';
 import DashboardLayout from './pages/DashboardLayout';
 import DashboardPage from './pages/DashboardPage';
-import UsersPage from './pages/UsersPage';
-import BusinessesPage from './pages/BusinessesPage';
+import MerchantsPage from './pages/MerchantsPage';
+import ConsumersPage from './pages/ConsumersPage';
 import OrdersPage from './pages/OrdersPage';
 import TransactionsPage from './pages/TransactionsPage';
 import ConnectionsPage from './pages/ConnectionsPage';
@@ -14,6 +14,7 @@ import ReportsPage from './pages/ReportsPage';
 import NotificationsPage from './pages/NotificationsPage';
 import AuditLogsPage from './pages/AuditLogsPage';
 import SubscriptionsPage from './pages/SubscriptionsPage';
+import SuggestionsPage from './pages/SuggestionsPage';
 import { useAuthStore } from './lib/auth-store';
 
 const queryClient = new QueryClient();
@@ -44,17 +45,18 @@ function App() {
             }
           >
             <Route index element={<DashboardPage />} />
-            <Route path="users" element={<UsersPage />} />
-            <Route path="businesses" element={<BusinessesPage />} />
-            <Route path="orders" element={<OrdersPage />} />
+            <Route path="merchants" element={<MerchantsPage />} />
+            <Route path="consumers" element={<ConsumersPage />} />
+            <Route path="subscriptions" element={<SubscriptionsPage />} />
             <Route path="transactions" element={<TransactionsPage />} />
             <Route path="connections" element={<ConnectionsPage />} />
             <Route path="accounts" element={<AccountsPage />} />
             <Route path="expenses" element={<ExpensesPage />} />
             <Route path="reports" element={<ReportsPage />} />
+            <Route path="orders" element={<OrdersPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="audit-logs" element={<AuditLogsPage />} />
-            <Route path="subscriptions" element={<SubscriptionsPage />} />
+            <Route path="suggestions" element={<SuggestionsPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

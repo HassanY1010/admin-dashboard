@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import { useAuthStore } from "./auth-store";
+import adminApi from "./admin-api";
 
 interface PaymentRequestNotification {
   id: string;
@@ -21,9 +22,25 @@ interface PaymentRequestNotification {
 }
 
 export function useRealtimeNotifications() {
-  const [notifications, setNotifications] = useState<PaymentRequestNotification[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const token = useAuthStore((state) => state.token);
+
+  // Fetch initial unread count
+  useEffect(() => {
+    if (!token) return;
+    
+    const fetchInitialCount = async () => {
+      try {
+        const { count } = await adminApi.getNotificationsCount({ isRead: false });
+        setUnreadCount(count);
+      } catch (error) {
+        console.error("Failed to fetch notification count:", error);
+      }
+    };
+
+    fetchInitialCount();
+  }, [token]);
 
   useEffect(() => {
     if (!token) return;
@@ -38,6 +55,11 @@ export function useRealtimeNotifications() {
     });
 
     socket.on("admin-payment-request", (data: PaymentRequestNotification) => {
+      setNotifications((prev) => [data, ...prev]);
+      setUnreadCount((prev) => prev + 1);
+    });
+
+    socket.on("admin-suggestion-created", (data: any) => {
       setNotifications((prev) => [data, ...prev]);
       setUnreadCount((prev) => prev + 1);
     });

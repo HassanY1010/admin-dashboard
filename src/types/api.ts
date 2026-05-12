@@ -13,7 +13,11 @@ export interface User {
   lastLoginAt?: string;
   createdAt: string;
   updatedAt: string;
-  business?: Business;
+  business?: {
+    id: string;
+    subscriptionStatus: string;
+    subscriptionExpiry?: string;
+  };
 }
 
 export interface Business {
@@ -131,6 +135,18 @@ export interface Expense {
   userId: string;
   user: Pick<User, "id" | "fullName" | "phoneNumber">;
   createdAt: string;
+}
+
+export interface Suggestion {
+  id: string;
+  userId: string;
+  content: string;
+  whatsapp?: string;
+  status: "OPEN" | "REVIEWED" | "CLOSED";
+  createdAt: string;
+  user: Pick<User, "id" | "fullName" | "email" | "phoneNumber" | "userType"> & {
+    business?: { name: string };
+  };
 }
 
 export interface DashboardStats {
