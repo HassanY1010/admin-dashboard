@@ -1,4 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { getStoredRefreshToken, useAuthStore } from "./auth-store";
 
 // @ts-ignore
 // Configuration for failover IPs
@@ -62,9 +63,32 @@ apiClient.interceptors.response.use(
       return apiClient(config);
     }
 
+    if (error.response?.status === 401 && config && !(config as any)._refreshRetry) {
+      const refreshToken = getStoredRefreshToken();
+      if (refreshToken) {
+        try {
+          (config as any)._refreshRetry = true;
+          const { data } = await axios.post(`${BASE_URLS[currentUrlIndex]}/api/v1/auth/refresh`, { refreshToken });
+          const payload = data?.success === true && data?.data ? data.data : data;
+          localStorage.setItem("admin_token", payload.accessToken);
+          localStorage.setItem("admin_refresh_token", payload.refreshToken);
+          useAuthStore.getState().setAuth(payload.user, payload.accessToken, payload.refreshToken);
+          config.headers = config.headers || {};
+          config.headers.Authorization = `Bearer ${payload.accessToken}`;
+          return apiClient(config);
+        } catch {
+          localStorage.removeItem("admin_token");
+          localStorage.removeItem("admin_refresh_token");
+          localStorage.removeItem("admin_user");
+          window.location.href = "/login";
+        }
+      }
+    }
+
     if (error.response?.status === 401) {
       if (typeof window !== "undefined") {
         localStorage.removeItem("admin_token");
+        localStorage.removeItem("admin_refresh_token");
         localStorage.removeItem("admin_user");
         window.location.href = "/login";
       }

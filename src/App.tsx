@@ -15,6 +15,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import AuditLogsPage from './pages/AuditLogsPage';
 import SubscriptionsPage from './pages/SubscriptionsPage';
 import SuggestionsPage from './pages/SuggestionsPage';
+import OperationsPage from './pages/OperationsPage';
 import { useAuthStore } from './lib/auth-store';
 
 const queryClient = new QueryClient();
@@ -57,6 +58,7 @@ function App() {
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="audit-logs" element={<AuditLogsPage />} />
             <Route path="suggestions" element={<SuggestionsPage />} />
+            <Route path="operations" element={<OperationsPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

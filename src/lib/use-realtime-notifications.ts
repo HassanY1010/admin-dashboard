@@ -59,6 +59,11 @@ export function useRealtimeNotifications() {
       setUnreadCount((prev) => prev + 1);
     });
 
+    socket.on("notification:new", (data: any) => {
+      setNotifications((prev) => [data, ...prev]);
+      setUnreadCount((prev) => prev + 1);
+    });
+
     socket.on("admin-suggestion-created", (data: any) => {
       setNotifications((prev) => [data, ...prev]);
       setUnreadCount((prev) => prev + 1);

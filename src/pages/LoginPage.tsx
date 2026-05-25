@@ -9,8 +9,8 @@ import apiClient from "../lib/api-client";
 export default function LoginPage() {
   const navigate = useNavigate();
   const { setAuth } = useAuthStore();
-  const [email, setEmail] = useState("admin123@admin123.com");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -21,8 +21,8 @@ export default function LoginPage() {
 
     try {
       const { data } = await apiClient.post("auth/login", { email, password });
-      const { user, accessToken } = data as any;
-      setAuth(user, accessToken);
+      const { user, accessToken, refreshToken } = data as any;
+      setAuth(user, accessToken, refreshToken);
       navigate("/dashboard");
     } catch (err: any) {
       console.error("Login error:", err);
@@ -71,7 +71,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full h-12 pr-10 pl-4 bg-muted rounded-md border-0 focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="admin123@admin123.com"
+                  placeholder="admin@example.com"
                   required
                 />
               </div>

@@ -15,8 +15,9 @@ interface User {
 interface AuthState {
   user: User | null;
   token: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
-  setAuth: (user: User, token: string) => void;
+  setAuth: (user: User, token: string, refreshToken?: string | null) => void;
   logout: () => void;
 }
 
@@ -25,23 +26,26 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       token: null,
+      refreshToken: null,
       isAuthenticated: false,
-      setAuth: (user, token) => {
+      setAuth: (user, token, refreshToken = null) => {
         if (typeof window !== "undefined") {
           localStorage.setItem("admin_token", token);
+          if (refreshToken) localStorage.setItem("admin_refresh_token", refreshToken);
         }
-        set({ user, token, isAuthenticated: true });
+        set({ user, token, refreshToken, isAuthenticated: true });
       },
       logout: () => {
         if (typeof window !== "undefined") {
           localStorage.removeItem("admin_token");
+          localStorage.removeItem("admin_refresh_token");
         }
-        set({ user: null, token: null, isAuthenticated: false });
+        set({ user: null, token: null, refreshToken: null, isAuthenticated: false });
       },
     }),
     {
       name: "auth-storage",
-      partialize: (state) => ({ user: state.user, token: state.token }),
+      partialize: (state) => ({ user: state.user, token: state.token, refreshToken: state.refreshToken }),
     }
   )
 );
@@ -49,6 +53,11 @@ export const useAuthStore = create<AuthState>()(
 export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("admin_token");
+}
+
+export function getStoredRefreshToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("admin_refresh_token");
 }
 
 export async function verifyToken(token: string): Promise<boolean> {

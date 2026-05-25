@@ -31,6 +31,11 @@ const adminApi = {
     return data;
   },
 
+  async getOperationsSummary(): Promise<any> {
+    const { data } = await apiClient.get("/admin/operations/summary");
+    return data;
+  },
+
   // Users
   async getUsers(params: QueryParams = {}): Promise<PaginatedResponse<User>> {
     const { data } = await apiClient.get("/admin/users", { params });

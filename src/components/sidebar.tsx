@@ -19,6 +19,7 @@ import {
   ChevronRight,
   CreditCard,
   MessageSquare,
+  Activity,
 } from "lucide-react";
 
 const navItems = [
@@ -35,6 +36,7 @@ const navItems = [
   { href: "/dashboard/suggestions", label: "الشكاوى والاقتراحات", icon: MessageSquare },
   { href: "/dashboard/notifications", label: "الإشعارات", icon: Bell },
   { href: "/dashboard/audit-logs", label: "سجل العمليات", icon: Settings },
+  { href: "/dashboard/operations", label: "التشغيل والجاهزية", icon: Activity },
 ];
 
 export function Sidebar({ className }: { className?: string }) {
@@ -73,6 +75,7 @@ export function Sidebar({ className }: { className?: string }) {
         <button
           onClick={() => {
             localStorage.removeItem("admin_token");
+            localStorage.removeItem("admin_refresh_token");
             window.location.href = "/login";
           }}
           className="flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm font-medium text-destructive hover:bg-destructive/10"
