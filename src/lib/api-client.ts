@@ -1,101 +1,74 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
-import { getStoredRefreshToken, useAuthStore } from "./auth-store";
+import axios, { AxiosError } from "axios";
+import { useAuthStore } from "./auth-store";
 
-// @ts-ignore
-// Configuration for failover IPs
 const BASE_URLS = [
   (import.meta as any).env.VITE_API_URL || "https://sales-app-backend-6o15.onrender.com",
-  "http://localhost:3000"
+  "http://localhost:3000",
 ];
 
 let currentUrlIndex = 0;
+let isRefreshing = false;
 
 export const apiClient = axios.create({
   baseURL: `${BASE_URLS[currentUrlIndex]}/api/v1`,
   headers: {
     "Content-Type": "application/json",
+    "x-csrf-protection": "1",
   },
-  timeout: 5000, // Reduced timeout for faster failover
+  timeout: 5000,
+  withCredentials: true,
 });
 
-// Function to switch to the next available URL
 const rotateBaseUrl = () => {
   currentUrlIndex = (currentUrlIndex + 1) % BASE_URLS.length;
   apiClient.defaults.baseURL = `${BASE_URLS[currentUrlIndex]}/api/v1`;
-  console.log(`Switched API Base URL to: ${BASE_URLS[currentUrlIndex]}`);
   return BASE_URLS[currentUrlIndex];
 };
 
+function unwrapResponse(response: any) {
+  if (response.data && response.data.success === true && Object.prototype.hasOwnProperty.call(response.data, "data")) {
+    response.data = response.data.data;
+  }
+  return response;
+}
 
-apiClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("admin_token");
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+function clearAdminSession() {
+  useAuthStore.getState().logout();
+  if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+    window.location.href = "/login";
+  }
+}
 
 apiClient.interceptors.response.use(
-  (response) => {
-    // Automatically unwrap the standard backend response structure
-    if (response.data && response.data.success === true && response.data.hasOwnProperty('data')) {
-      response.data = response.data.data;
-    }
-    return response;
-  },
+  unwrapResponse,
   async (error: AxiosError) => {
-    const config = error.config;
-    
-    // If it's a network error or timeout, and we haven't retried this specific request yet
-    if ((!error.response || error.code === 'ECONNABORTED') && config && !(config as any)._isRetry) {
-      (config as any)._isRetry = true;
-      
-      // Switch IP
+    const config = error.config as any;
+
+    if ((!error.response || error.code === "ECONNABORTED") && config && !config._isRetry) {
+      config._isRetry = true;
       rotateBaseUrl();
-      
-      // Update config baseURL and retry
-      config.baseURL = apiClient.defaults.baseURL;
       return apiClient(config);
     }
 
-    if (error.response?.status === 401 && config && !(config as any)._refreshRetry) {
-      const refreshToken = getStoredRefreshToken();
-      if (refreshToken) {
-        try {
-          (config as any)._refreshRetry = true;
-          const { data } = await axios.post(`${BASE_URLS[currentUrlIndex]}/api/v1/auth/refresh`, { refreshToken });
-          const payload = data?.success === true && data?.data ? data.data : data;
-          localStorage.setItem("admin_token", payload.accessToken);
-          localStorage.setItem("admin_refresh_token", payload.refreshToken);
-          useAuthStore.getState().setAuth(payload.user, payload.accessToken, payload.refreshToken);
-          config.headers = config.headers || {};
-          config.headers.Authorization = `Bearer ${payload.accessToken}`;
-          return apiClient(config);
-        } catch {
-          localStorage.removeItem("admin_token");
-          localStorage.removeItem("admin_refresh_token");
-          localStorage.removeItem("admin_user");
-          window.location.href = "/login";
-        }
+    if (error.response?.status === 401 && config && !config._refreshRetry && !isRefreshing) {
+      try {
+        isRefreshing = true;
+        config._refreshRetry = true;
+        await apiClient.post("/auth/refresh", {});
+        return apiClient(config);
+      } catch {
+        clearAdminSession();
+      } finally {
+        isRefreshing = false;
       }
     }
 
     if (error.response?.status === 401) {
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("admin_token");
-        localStorage.removeItem("admin_refresh_token");
-        localStorage.removeItem("admin_user");
-        window.location.href = "/login";
-      }
+      clearAdminSession();
     }
-    return Promise.reject(error);
-  }
 
+    return Promise.reject(error);
+  },
 );
 
 export default apiClient;

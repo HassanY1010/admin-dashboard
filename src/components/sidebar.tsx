@@ -3,6 +3,8 @@
 import { useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/lib/auth-store";
+import apiClient from "@/lib/api-client";
 import {
   LayoutDashboard,
   Users,
@@ -13,6 +15,7 @@ import {
   Link2,
   FileText,
   Bell,
+  CalendarClock,
   Settings,
   Shield,
   LogOut,
@@ -20,6 +23,7 @@ import {
   CreditCard,
   MessageSquare,
   Activity,
+  FilePenLine,
 } from "lucide-react";
 
 const navItems = [
@@ -33,6 +37,8 @@ const navItems = [
   { href: "/dashboard/accounts", label: "الحسابات", icon: Wallet },
   { href: "/dashboard/expenses", label: "المصاريف", icon: FileText },
   { href: "/dashboard/reports", label: "التقارير", icon: Shield },
+  { href: "/dashboard/due-accounts", label: "مواعيد السداد", icon: CalendarClock },
+  { href: "/dashboard/adjustment-requests", label: "طلبات التعديل", icon: FilePenLine },
   { href: "/dashboard/suggestions", label: "الشكاوى والاقتراحات", icon: MessageSquare },
   { href: "/dashboard/notifications", label: "الإشعارات", icon: Bell },
   { href: "/dashboard/audit-logs", label: "سجل العمليات", icon: Settings },
@@ -41,6 +47,18 @@ const navItems = [
 
 export function Sidebar({ className }: { className?: string }) {
   const pathname = useLocation().pathname;
+  const logout = useAuthStore((state) => state.logout);
+
+  const handleLogout = async () => {
+    try {
+      await apiClient.post("/auth/logout", {});
+    } catch (error) {
+      console.error("Logout request failed:", error);
+    } finally {
+      logout();
+      window.location.href = "/login";
+    }
+  };
 
   return (
     <aside className={cn("flex flex-col h-screen bg-white border-l border-border", className)}>
@@ -73,11 +91,7 @@ export function Sidebar({ className }: { className?: string }) {
 
       <div className="p-2 border-t border-border">
         <button
-          onClick={() => {
-            localStorage.removeItem("admin_token");
-            localStorage.removeItem("admin_refresh_token");
-            window.location.href = "/login";
-          }}
+          onClick={handleLogout}
           className="flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm font-medium text-destructive hover:bg-destructive/10"
         >
           <LogOut className="w-5 h-5" />

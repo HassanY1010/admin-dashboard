@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAuthStore } from "@/lib/auth-store";
 import { useRealtimeNotifications } from "@/lib/use-realtime-notifications";
+import apiClient from "@/lib/api-client";
 
 import { Bell, Search, User, ChevronDown, Moon, Sun, Menu } from "lucide-react";
 
@@ -16,9 +17,13 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   const [darkMode, setDarkMode] = useState(false);
   const { unreadCount } = useRealtimeNotifications();
 
-  const handleLogout = () => {
-    logout();
-    window.location.href = "/login";
+  const handleLogout = async () => {
+    try {
+      await apiClient.post("/auth/logout", {});
+    } finally {
+      logout();
+      window.location.href = "/login";
+    }
   };
 
   return (

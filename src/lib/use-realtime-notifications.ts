@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import { useAuthStore } from "./auth-store";
@@ -24,35 +22,36 @@ interface PaymentRequestNotification {
 export function useRealtimeNotifications() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const token = useAuthStore((state) => state.token);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  // Fetch initial unread count
+  // Fetch initial unread count from server
   useEffect(() => {
-    if (!token) return;
-    
+    if (!isAuthenticated) return;
+
     const fetchInitialCount = async () => {
       try {
         const { count } = await adminApi.getNotificationsCount({ isRead: false });
         setUnreadCount(count);
-      } catch (error) {
-        console.error("Failed to fetch notification count:", error);
+      } catch {
+        // Silently fail — non-critical
       }
     };
 
     fetchInitialCount();
-  }, [token]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!isAuthenticated) return;
 
-    const socket: Socket = io((import.meta as any).env.VITE_SOCKET_URL || (import.meta as any).env.VITE_API_URL || "https://sales-app-backend-6o15.onrender.com", {
-      auth: { token },
-      transports: ["websocket"],
-    });
-
-    socket.on("connect", () => {
-      console.log("Connected to WebSocket");
-    });
+    const socket: Socket = io(
+      (import.meta as any).env.VITE_SOCKET_URL ||
+        (import.meta as any).env.VITE_API_URL ||
+        "https://sales-app-backend-6o15.onrender.com",
+      {
+        withCredentials: true,
+        transports: ["websocket"],
+      },
+    );
 
     socket.on("admin-payment-request", (data: PaymentRequestNotification) => {
       setNotifications((prev) => [data, ...prev]);
@@ -69,17 +68,23 @@ export function useRealtimeNotifications() {
       setUnreadCount((prev) => prev + 1);
     });
 
-    socket.on("disconnect", () => {
-      console.log("Disconnected from WebSocket");
-    });
-
     return () => {
       socket.disconnect();
     };
-  }, [token]);
+  }, [isAuthenticated]);
 
-  const markAsRead = useCallback(() => {
+  // FIX ADMIN-03: markAsRead also calls the server API to persist read state
+  const markAsRead = useCallback(async () => {
     setUnreadCount(0);
+    // Mark all unread notifications as read on the server
+    try {
+      const unread = await adminApi.getNotifications({ isRead: false, limit: 50 });
+      await Promise.all(
+        (unread.data || []).map((n: any) => adminApi.markNotificationAsRead(n.id)),
+      );
+    } catch {
+      // Non-critical — local state already cleared
+    }
   }, []);
 
   return { notifications, unreadCount, markAsRead };

@@ -21,8 +21,11 @@ export default function LoginPage() {
 
     try {
       const { data } = await apiClient.post("auth/login", { email, password });
-      const { user, accessToken, refreshToken } = data as any;
-      setAuth(user, accessToken, refreshToken);
+      const { user } = data as any;
+      if (!["SUPER_ADMIN", "ADMIN", "SUPPORT"].includes(user?.role)) {
+        throw new Error("هذا الحساب لا يملك صلاحية الدخول إلى لوحة الإدارة");
+      }
+      setAuth(user);
       navigate("/dashboard");
     } catch (err: any) {
       console.error("Login error:", err);

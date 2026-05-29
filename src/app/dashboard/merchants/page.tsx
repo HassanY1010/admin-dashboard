@@ -17,15 +17,23 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { 
-  UserX, 
-  UserCheck, 
-  Key, 
-  Send, 
+import {
+  UserX,
+  UserCheck,
+  Key,
+  Send,
   CalendarPlus,
-  RefreshCcw
+  RefreshCcw,
+  ShieldCheck,
 } from "lucide-react";
 import type { User } from "@/types/api";
+
+const ROLE_OPTIONS = [
+  { value: "USER", label: "مستخدم عادي" },
+  { value: "SUPPORT", label: "دعم فني" },
+  { value: "ADMIN", label: "مدير" },
+  { value: "SUPER_ADMIN", label: "مدير عام" },
+];
 
 export default function MerchantsPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -35,7 +43,11 @@ export default function MerchantsPage() {
 
   const [showExtendDialog, setShowExtendDialog] = useState(false);
   const [extendDays, setExtendDays] = useState<number | "">("");
-  
+
+  // FIX ADMIN-05: Change Role UI
+  const [showChangeRoleDialog, setShowChangeRoleDialog] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<string>("USER");
+
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -46,7 +58,7 @@ export default function MerchantsPage() {
   });
 
   const toggleStatusMutation = useMutation({
-    mutationFn: (user: User) => 
+    mutationFn: (user: User) =>
       adminApi.toggleUserStatus(user.id, !user.isActive),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["merchants"] });
@@ -58,13 +70,16 @@ export default function MerchantsPage() {
   const resetPasswordMutation = useMutation({
     mutationFn: (userId: string) => adminApi.resetUserPassword(userId),
     onSuccess: (data) => {
-      toast.success(data.message || "تم إعادة تعيين كلمة المرور بنجاح");
+      toast.success(
+        `تم إعادة تعيين كلمة المرور. كلمة المرور المؤقتة: ${data.temporaryPassword || "تحقق من البريد"}`,
+        { duration: 8000 },
+      );
     },
     onError: () => toast.error("فشل في إعادة تعيين كلمة المرور"),
   });
 
   const extendSubscriptionMutation = useMutation({
-    mutationFn: ({ businessId, days }: { businessId: string; days?: number }) => 
+    mutationFn: ({ businessId, days }: { businessId: string; days?: number }) =>
       adminApi.extendSubscription(businessId, days),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["merchants"] });
@@ -76,7 +91,7 @@ export default function MerchantsPage() {
   });
 
   const sendNotificationMutation = useMutation({
-    mutationFn: () => 
+    mutationFn: () =>
       adminApi.sendNotification(selectedUser!.id, notificationTitle, notificationBody),
     onSuccess: () => {
       setShowNotifyDialog(false);
@@ -84,6 +99,18 @@ export default function MerchantsPage() {
       toast.success("تم إرسال الإشعار بنجاح");
     },
     onError: () => toast.error("فشل في إرسال الإشعار"),
+  });
+
+  // FIX ADMIN-05: Change role mutation
+  const changeRoleMutation = useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: string }) =>
+      adminApi.changeUserRole(userId, role),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["merchants"] });
+      setShowChangeRoleDialog(false);
+      toast.success("تم تغيير صلاحية المستخدم بنجاح");
+    },
+    onError: () => toast.error("فشل في تغيير الصلاحية"),
   });
 
   const columns: Column<User>[] = [
@@ -101,6 +128,25 @@ export default function MerchantsPage() {
       key: "phoneNumber",
       header: "رقم الهاتف",
       render: (row) => <span className="text-sm text-muted-foreground" dir="ltr">{row.phoneNumber}</span>,
+    },
+    {
+      key: "role",
+      header: "الصلاحية",
+      render: (row) => (
+        <Badge
+          className={
+            row.role === "SUPER_ADMIN"
+              ? "bg-red-100 text-red-700"
+              : row.role === "ADMIN"
+              ? "bg-orange-100 text-orange-700"
+              : row.role === "SUPPORT"
+              ? "bg-blue-100 text-blue-700"
+              : "bg-gray-100 text-gray-600"
+          }
+        >
+          {ROLE_OPTIONS.find((r) => r.value === row.role)?.label || row.role}
+        </Badge>
+      ),
     },
     {
       key: "isActive",
@@ -121,17 +167,17 @@ export default function MerchantsPage() {
       header: "تاريخ الانتهاء",
       render: (row) => {
         let expiryDate = new Date(row.createdAt);
-        expiryDate.setDate(expiryDate.getDate() + 90); // Default 3 months trial
-        
+        expiryDate.setDate(expiryDate.getDate() + 90);
+
         if (row.business?.subscriptionExpiry) {
           const businessExpiry = new Date(row.business.subscriptionExpiry);
           if (businessExpiry > expiryDate) {
             expiryDate = businessExpiry;
           }
         }
-        
+
         const isExpired = new Date() > expiryDate;
-        
+
         return (
           <Badge className={isExpired ? "bg-red-50 text-red-700" : "bg-purple-50 text-purple-700"}>
             {formatDate(expiryDate.toISOString())}
@@ -170,6 +216,21 @@ export default function MerchantsPage() {
             title="إعادة تعيين كلمة المرور"
           >
             <Key className="h-4 w-4" />
+          </Button>
+
+          {/* Change Role — FIX ADMIN-05 */}
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-amber-600 border-amber-200"
+            onClick={() => {
+              setSelectedUser(row);
+              setSelectedRole(row.role || "USER");
+              setShowChangeRoleDialog(true);
+            }}
+            title="تغيير الصلاحية"
+          >
+            <ShieldCheck className="h-4 w-4" />
           </Button>
 
           {/* Extend Subscription */}
@@ -230,6 +291,48 @@ export default function MerchantsPage() {
         onSearch={setSearch}
       />
 
+      {/* Change Role Dialog — FIX ADMIN-05 */}
+      <Dialog open={showChangeRoleDialog} onOpenChange={setShowChangeRoleDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>تغيير صلاحية المستخدم</DialogTitle>
+            <DialogDescription>
+              اختر الصلاحية الجديدة للمستخدم: <strong>{selectedUser?.fullName}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-3">
+            {ROLE_OPTIONS.map((role) => (
+              <button
+                key={role.value}
+                onClick={() => setSelectedRole(role.value)}
+                className={`w-full text-right px-4 py-3 rounded-md border transition-colors ${
+                  selectedRole === role.value
+                    ? "border-primary bg-primary/5 text-primary font-medium"
+                    : "border-border hover:bg-muted"
+                }`}
+              >
+                {role.label}
+              </button>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowChangeRoleDialog(false)}>
+              إلغاء
+            </Button>
+            <Button
+              onClick={() => {
+                if (selectedUser) {
+                  changeRoleMutation.mutate({ userId: selectedUser.id, role: selectedRole });
+                }
+              }}
+              disabled={changeRoleMutation.isPending || selectedRole === selectedUser?.role}
+            >
+              حفظ التغيير
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Notification Dialog */}
       <Dialog open={showNotifyDialog} onOpenChange={setShowNotifyDialog}>
         <DialogContent>
@@ -242,7 +345,7 @@ export default function MerchantsPage() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">العنوان</label>
-              <input 
+              <input
                 className="w-full p-2 border rounded-md"
                 value={notificationTitle}
                 onChange={(e) => setNotificationTitle(e.target.value)}
@@ -259,8 +362,8 @@ export default function MerchantsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowNotifyDialog(false)}>إلغاء</Button>
-            <Button 
-              onClick={() => sendNotificationMutation.mutate()} 
+            <Button
+              onClick={() => sendNotificationMutation.mutate()}
               disabled={sendNotificationMutation.isPending || !notificationBody}
             >
               إرسال الآن
@@ -281,7 +384,7 @@ export default function MerchantsPage() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">عدد الأيام</label>
-              <input 
+              <input
                 type="number"
                 min="1"
                 placeholder="مثال: 10, 30, 365..."
@@ -290,21 +393,21 @@ export default function MerchantsPage() {
                 onChange={(e) => setExtendDays(e.target.value ? Number(e.target.value) : "")}
               />
               <p className="text-xs text-muted-foreground">
-                سيتم إضافة هذه الأيام إلى تاريخ انتهاء الاشتراك الحالي أو تاريخ انتهاء الفترة التجريبية.
+                سيتم إضافة هذه الأيام إلى تاريخ انتهاء الاشتراك الحالي.
               </p>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowExtendDialog(false)}>إلغاء</Button>
-            <Button 
+            <Button
               onClick={() => {
                 if (selectedUser?.business?.id && extendDays !== "") {
-                  extendSubscriptionMutation.mutate({ 
-                    businessId: selectedUser.business.id, 
-                    days: Number(extendDays) 
+                  extendSubscriptionMutation.mutate({
+                    businessId: selectedUser.business.id,
+                    days: Number(extendDays),
                   });
                 }
-              }} 
+              }}
               disabled={extendSubscriptionMutation.isPending || extendDays === ""}
             >
               تمديد الآن

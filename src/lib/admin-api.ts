@@ -117,6 +117,21 @@ const adminApi = {
     return data;
   },
 
+  async getDueAccounts(params: QueryParams = {}): Promise<PaginatedResponse<any>> {
+    const { data } = await apiClient.get("/admin/due-accounts", { params });
+    return data;
+  },
+
+  async getAdjustmentRequests(params: QueryParams = {}): Promise<PaginatedResponse<any>> {
+    const { data } = await apiClient.get("/admin/adjustment-requests", { params });
+    return data;
+  },
+
+  async rejectAdjustmentRequest(id: string, rejectionReason: string): Promise<any> {
+    const { data } = await apiClient.put(`/admin/adjustment-requests/${id}/reject`, { rejectionReason });
+    return data;
+  },
+
   // Expenses
   async getExpenses(params: QueryParams = {}): Promise<PaginatedResponse<Expense>> {
     const { data } = await apiClient.get("/admin/expenses", { params });
@@ -188,10 +203,15 @@ const adminApi = {
     return data;
   },
 
+
   // Notifications Count
   async getNotificationsCount(params: { isRead?: boolean } = {}): Promise<{ count: number }> {
     const { data } = await apiClient.get("/admin/notifications/count", { params });
     return data;
+  },
+
+  async markNotificationAsRead(id: string): Promise<void> {
+    await apiClient.put(`/admin/notifications/${id}/read`);
   },
 };
 

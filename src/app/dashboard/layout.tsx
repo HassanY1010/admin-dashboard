@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
-import { useAuthStore, getStoredToken, verifyToken } from "@/lib/auth-store";
+import { useAuthStore } from "@/lib/auth-store";
+import apiClient from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
 export default function DashboardLayout({
@@ -20,26 +21,13 @@ export default function DashboardLayout({
 
   useEffect(() => {
     const initAuth = async () => {
-      const token = getStoredToken();
-      if (!token) {
-        navigate("/login");
-        return;
-      }
-
-      const valid = await verifyToken(token);
-      if (!valid) {
-        navigate("/login");
-        return;
-      }
-
       try {
-        const storedUser = localStorage.getItem("auth-storage");
-        if (storedUser) {
-          const parsed = JSON.parse(storedUser);
-          if (parsed.state?.user) {
-            setAuth(parsed.state.user, token);
-          }
+        const { data: user } = await apiClient.get("/users/me");
+        if (!["SUPER_ADMIN", "ADMIN", "SUPPORT"].includes(user?.role)) {
+          navigate("/login");
+          return;
         }
+        setAuth(user);
       } catch {
         navigate("/login");
         return;
