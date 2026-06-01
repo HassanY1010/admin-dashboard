@@ -24,6 +24,8 @@ import {
   MessageSquare,
   Activity,
   FilePenLine,
+  BadgeDollarSign,
+  Landmark,
 } from "lucide-react";
 
 const navItems = [
@@ -43,6 +45,10 @@ const navItems = [
   { href: "/dashboard/notifications", label: "الإشعارات", icon: Bell },
   { href: "/dashboard/audit-logs", label: "سجل العمليات", icon: Settings },
   { href: "/dashboard/operations", label: "التشغيل والجاهزية", icon: Activity },
+  // ── نظام الإحالة والعمولات ──
+  { href: "/dashboard/agents", label: "المناديب", icon: Users, divider: true },
+  { href: "/dashboard/commissions", label: "سجل العمولات", icon: BadgeDollarSign },
+  { href: "/dashboard/payouts", label: "صرف العمولات", icon: Landmark },
 ];
 
 export function Sidebar({ className }: { className?: string }) {
@@ -71,20 +77,30 @@ export function Sidebar({ className }: { className?: string }) {
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
-            <Link
-              key={item.href}
-              to={item.href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            <>
+              {(item as any).divider && (
+                <div className="pt-3 pb-1 px-3">
+                  <div className="border-t border-border" />
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-2">
+                    نظام الإحالة
+                  </p>
+                </div>
               )}
-            >
-              <item.icon className="w-5 h-5" />
-              <span>{item.label}</span>
-              {isActive && <ChevronRight className="w-4 h-4 mr-auto" />}
-            </Link>
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <item.icon className="w-5 h-5" />
+                <span>{item.label}</span>
+                {isActive && <ChevronRight className="w-4 h-4 mr-auto" />}
+              </Link>
+            </>
           );
         })}
       </nav>

@@ -18,6 +18,9 @@ import SuggestionsPage from './pages/SuggestionsPage';
 import OperationsPage from './pages/OperationsPage';
 import AdjustmentRequestsPage from './pages/AdjustmentRequestsPage';
 import DueAccountsPage from './pages/DueAccountsPage';
+import AgentsPage from './pages/AgentsPage';
+import CommissionsPage from './pages/CommissionsPage';
+import PayoutsPage from './pages/PayoutsPage';
 
 const queryClient = new QueryClient();
 
@@ -48,6 +51,9 @@ function App() {
             <Route path="operations" element={<OperationsPage />} />
             <Route path="adjustment-requests" element={<AdjustmentRequestsPage />} />
             <Route path="due-accounts" element={<DueAccountsPage />} />
+            <Route path="agents" element={<AgentsPage />} />
+            <Route path="commissions" element={<CommissionsPage />} />
+            <Route path="payouts" element={<PayoutsPage />} />
           </Route>
         </Routes>
       </BrowserRouter>
