@@ -66,7 +66,7 @@ export function DataTable<T extends { id?: string }>({
         </form>
       )}
 
-      <div className="rounded-md border border-border overflow-hidden">
+      <div className="rounded-md border border-border overflow-x-auto">
         <table className="w-full">
           <thead className="bg-muted">
             <tr>
