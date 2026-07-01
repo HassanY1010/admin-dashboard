@@ -46,7 +46,7 @@ export function useRealtimeNotifications() {
     const socket: Socket = io(
       (import.meta as any).env.VITE_SOCKET_URL ||
         (import.meta as any).env.VITE_API_URL ||
-        "https://sales-app-backend-6o15.onrender.com",
+        "https://sales-app-backend-jhxe.onrender.com",
       {
         withCredentials: true,
         transports: ["websocket"],

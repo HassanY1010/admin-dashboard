@@ -2,7 +2,7 @@ import axios, { AxiosError } from "axios";
 import { useAuthStore } from "./auth-store";
 
 const BASE_URLS = [
-  (import.meta as any).env.VITE_API_URL || "https://sales-app-backend-6o15.onrender.com",
+  (import.meta as any).env.VITE_API_URL || "https://sales-app-backend-jhxe.onrender.com",
   "http://localhost:3000",
 ];
 
