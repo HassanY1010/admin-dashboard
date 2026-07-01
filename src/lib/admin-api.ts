@@ -132,6 +132,11 @@ const adminApi = {
     return data;
   },
 
+  async approveAdjustmentRequest(id: string): Promise<any> {
+    const { data } = await apiClient.put(`/admin/adjustment-requests/${id}/approve`);
+    return data;
+  },
+
   // Expenses
   async getExpenses(params: QueryParams = {}): Promise<PaginatedResponse<Expense>> {
     const { data } = await apiClient.get("/admin/expenses", { params });
@@ -212,6 +217,11 @@ const adminApi = {
 
   async markNotificationAsRead(id: string): Promise<void> {
     await apiClient.put(`/admin/notifications/${id}/read`);
+  },
+
+  async deleteUser(userId: string): Promise<{ success: boolean; message: string }> {
+    const { data } = await apiClient.delete(`/admin/users/${userId}`);
+    return data;
   },
 };
 

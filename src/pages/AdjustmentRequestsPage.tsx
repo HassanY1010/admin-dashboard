@@ -32,6 +32,12 @@ export default function AdjustmentRequestsPage() {
     await fetchRows(page);
   };
 
+  const approve = async (id: string) => {
+    if (!window.confirm("هل أنت متأكد من الموافقة على هذا الطلب؟")) return;
+    await adminApi.approveAdjustmentRequest(id);
+    await fetchRows(page);
+  };
+
   const columns: Column<any>[] = [
     {
       key: "targetType",
@@ -67,12 +73,20 @@ export default function AdjustmentRequestsPage() {
       key: "actions",
       header: "إجراء",
       render: (row) => row.status === "PENDING" ? (
-        <button
-          onClick={() => reject(row.id)}
-          className="px-3 py-1 text-xs rounded-md bg-destructive text-destructive-foreground"
-        >
-          رفض إداري
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => approve(row.id)}
+            className="px-3 py-1 text-xs rounded-md bg-green-600 text-white hover:bg-green-700"
+          >
+            موافقة
+          </button>
+          <button
+            onClick={() => reject(row.id)}
+            className="px-3 py-1 text-xs rounded-md bg-destructive text-destructive-foreground"
+          >
+            رفض إداري
+          </button>
+        </div>
       ) : "-",
     },
   ];

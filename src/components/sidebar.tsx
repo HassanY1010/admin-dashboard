@@ -30,6 +30,8 @@ import {
 
 const navItems = [
   { href: "/dashboard", label: "لوحة التحكم", icon: LayoutDashboard },
+  { href: "/dashboard/users", label: "إدارة المستخدمين", icon: Users },
+  { href: "/dashboard/businesses", label: "الشركات المسجلة", icon: Building2 },
   { href: "/dashboard/merchants", label: "إدارة التجار", icon: Building2 },
   { href: "/dashboard/consumers", label: "إدارة المستهلكين", icon: Users },
   { href: "/dashboard/subscriptions", label: "الاشتراكات", icon: CreditCard },

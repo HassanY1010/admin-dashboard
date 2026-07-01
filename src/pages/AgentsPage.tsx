@@ -17,7 +17,8 @@ import {
 import { format } from "date-fns";
 import { arSA } from "date-fns/locale";
 import { toast } from "sonner";
-import { UserPlus, Edit, ToggleLeft, ToggleRight, Copy } from "lucide-react";
+import { UserPlus, Edit, ToggleLeft, ToggleRight, Copy, Building2, MapPin, Plus } from "lucide-react";
+import adminApi from "@/lib/admin-api";
 
 const statusLabels: Record<string, { label: string; class: string }> = {
   ACTIVE:    { label: "نشط",     class: "bg-green-100 text-green-800" },
@@ -41,6 +42,10 @@ export default function AgentsPage() {
     regionId: "",
   });
 
+  // ── Region Dialog State ──
+  const [showRegions, setShowRegions] = useState(false);
+  const [newRegionName, setNewRegionName] = useState("");
+
   // ── Edit Commission Dialog ──
   const [editAgent, setEditAgent] = useState<any>(null);
   const [editForm, setEditForm] = useState({
@@ -60,6 +65,12 @@ export default function AgentsPage() {
     queryFn: () => regionsApi.getAll(),
   });
 
+  const { data: usersData } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: () => adminApi.getUsers({ limit: 100 }),
+  });
+  const users = usersData?.data || [];
+
   // ── Mutations ──
   const createMutation = useMutation({
     mutationFn: () =>
@@ -78,6 +89,18 @@ export default function AgentsPage() {
     },
     onError: (e: any) => {
       toast.error(e?.response?.data?.message || "فشل في إنشاء المندوب");
+    },
+  });
+
+  const createRegionMutation = useMutation({
+    mutationFn: (name: string) => regionsApi.create(name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["regions"] });
+      setNewRegionName("");
+      toast.success("تم إنشاء المنطقة بنجاح");
+    },
+    onError: (e: any) => {
+      toast.error(e?.response?.data?.message || "فشل في إنشاء المنطقة");
     },
   });
 
@@ -158,7 +181,7 @@ export default function AgentsPage() {
     {
       key: "region",
       header: "المنطقة",
-      render: (row: any) => row.region?.nameAr || "-",
+      render: (row: any) => row.region?.name || "-",
     },
     {
       key: "createdAt",
@@ -222,10 +245,16 @@ export default function AgentsPage() {
             إنشاء وإدارة حسابات المناديب وعمولاتهم
           </p>
         </div>
-        <Button onClick={() => setShowCreate(true)}>
-          <UserPlus className="w-4 h-4 ml-2" />
-          إضافة مندوب جديد
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowRegions(true)}>
+            <Building2 className="w-4 h-4 ml-2" />
+            إدارة المناطق
+          </Button>
+          <Button onClick={() => setShowCreate(true)}>
+            <UserPlus className="w-4 h-4 ml-2" />
+            إضافة مندوب جديد
+          </Button>
+        </div>
       </div>
 
       {/* Filter */}
@@ -256,13 +285,19 @@ export default function AgentsPage() {
 
           <div className="space-y-3 py-2">
             <div>
-              <label className="text-sm font-medium mb-1 block">معرّف المستخدم (User ID)</label>
-              <input
-                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+              <label className="text-sm font-medium mb-1 block">اختر المستخدم</label>
+              <select
                 value={createForm.userId}
                 onChange={(e: any) => setCreateForm((f) => ({ ...f, userId: e.target.value }))}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              />
+              >
+                <option value="">اختر مستخدماً...</option>
+                {users.map((u: any) => (
+                  <option key={u.id} value={u.id}>
+                    {u.fullName} ({u.phoneNumber}) - {u.email}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">كود الإحالة</label>
@@ -311,7 +346,7 @@ export default function AgentsPage() {
                   <option value="">اختر منطقة</option>
                   {regions.map((r: any) => (
                     <option key={r.id} value={r.id}>
-                      {r.nameAr}
+                      {r.name}
                     </option>
                   ))}
                 </select>
@@ -388,6 +423,64 @@ export default function AgentsPage() {
             >
               {editMutation.isPending ? "جاري الحفظ..." : "حفظ التغييرات"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Manage Regions Dialog ── */}
+      <Dialog open={showRegions} onOpenChange={setShowRegions}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>إدارة المناطق الجغرافية</DialogTitle>
+            <DialogDescription>
+              عرض المناطق المتاحة للنظام وإضافة مناطق عمل جديدة للمناديب
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Add new region form */}
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <label className="text-sm font-medium mb-1 block">اسم المنطقة الجديدة</label>
+                <input
+                  placeholder="مثال: صنعاء، تعز، عدن..."
+                  value={newRegionName}
+                  onChange={(e: any) => setNewRegionName(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
+              <Button
+                onClick={() => createRegionMutation.mutate(newRegionName.trim())}
+                disabled={createRegionMutation.isPending || !newRegionName.trim()}
+              >
+                <Plus className="w-4 h-4 ml-1" />
+                إضافة
+              </Button>
+            </div>
+
+            <div className="border rounded-md divide-y max-h-60 overflow-y-auto">
+              {regions.length === 0 ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  لا توجد مناطق مضافة حالياً.
+                </div>
+              ) : (
+                regions.map((r: any) => (
+                  <div key={r.id} className="p-3 flex justify-between items-center text-sm">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-primary" />
+                      <span className="font-medium">{r.name}</span>
+                    </div>
+                    <Badge className="border text-muted-foreground">
+                      {r._count?.agents || 0} مناديب
+                    </Badge>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setShowRegions(false)}>إغلاق</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

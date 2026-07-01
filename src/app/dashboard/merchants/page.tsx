@@ -25,6 +25,8 @@ import {
   CalendarPlus,
   RefreshCcw,
   ShieldCheck,
+  Trash2,
+  Copy,
 } from "lucide-react";
 import type { User } from "@/types/api";
 
@@ -47,6 +49,10 @@ export default function MerchantsPage() {
   // FIX ADMIN-05: Change Role UI
   const [showChangeRoleDialog, setShowChangeRoleDialog] = useState(false);
   const [selectedRole, setSelectedRole] = useState<string>("USER");
+
+  // Delete User
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
@@ -113,6 +119,17 @@ export default function MerchantsPage() {
     onError: () => toast.error("فشل في تغيير الصلاحية"),
   });
 
+  const deleteUserMutation = useMutation({
+    mutationFn: (userId: string) => adminApi.deleteUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["merchants"] });
+      setShowDeleteDialog(false);
+      setUserToDelete(null);
+      toast.success("تم حذف المستخدم نهائياً");
+    },
+    onError: () => toast.error("فشل في حذف المستخدم"),
+  });
+
   const columns: Column<User>[] = [
     {
       key: "fullName",
@@ -120,7 +137,21 @@ export default function MerchantsPage() {
       render: (row) => (
         <div>
           <p className="font-medium">{row.fullName}</p>
-          <p className="text-xs text-muted-foreground">{row.email}</p>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span>{row.email}</span>
+            <span>•</span>
+            <span className="font-mono text-[10px] bg-muted px-1 rounded">{row.id.substring(0, 8)}...</span>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(row.id);
+                toast.success("تم نسخ معرّف المستخدم (User ID)");
+              }}
+              className="text-muted-foreground hover:text-foreground inline-flex items-center"
+              title="نسخ معرّف المستخدم (User ID)"
+            >
+              <Copy className="w-3 h-3" />
+            </button>
+          </div>
         </div>
       ),
     },
@@ -263,6 +294,20 @@ export default function MerchantsPage() {
             title="إرسال إشعار"
           >
             <Send className="h-4 w-4" />
+          </Button>
+
+          {/* Delete User — SUPER_ADMIN only */}
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-red-700 border-red-300 hover:bg-red-50"
+            onClick={() => {
+              setUserToDelete(row);
+              setShowDeleteDialog(true);
+            }}
+            title="حذف المستخدم نهائياً"
+          >
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       ),
@@ -411,6 +456,29 @@ export default function MerchantsPage() {
               disabled={extendSubscriptionMutation.isPending || extendDays === ""}
             >
               تمديد الآن
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Delete User Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-700">⚠️ حذف مستخدم نهائياً</DialogTitle>
+            <DialogDescription>
+              أنت على وشك حذف المستخدم <strong>{userToDelete?.fullName}</strong> ({userToDelete?.email}) بشكل نهائي.
+              <br />
+              <span className="text-red-600 font-medium">هذا الإجراء لا يمكن التراجع عنه.</span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>إلغاء</Button>
+            <Button
+              className="bg-red-700 hover:bg-red-800"
+              onClick={() => userToDelete && deleteUserMutation.mutate(userToDelete.id)}
+              disabled={deleteUserMutation.isPending}
+            >
+              {deleteUserMutation.isPending ? "جاري الحذف..." : "حذف نهائياً"}
             </Button>
           </DialogFooter>
         </DialogContent>

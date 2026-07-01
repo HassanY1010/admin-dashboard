@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import ProtectedRoute from './components/protected-route';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import LoginPage from './pages/LoginPage';
 import DashboardLayout from './pages/DashboardLayout';
@@ -21,6 +22,8 @@ import DueAccountsPage from './pages/DueAccountsPage';
 import AgentsPage from './pages/AgentsPage';
 import CommissionsPage from './pages/CommissionsPage';
 import PayoutsPage from './pages/PayoutsPage';
+import UsersPage from './pages/UsersPage';
+import BusinessesPage from './pages/BusinessesPage';
 
 const queryClient = new QueryClient();
 
@@ -33,7 +36,11 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route
             path="/dashboard"
-            element={<DashboardLayout />}
+            element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }
           >
             <Route index element={<DashboardPage />} />
             <Route path="merchants" element={<MerchantsPage />} />
@@ -54,6 +61,8 @@ function App() {
             <Route path="agents" element={<AgentsPage />} />
             <Route path="commissions" element={<CommissionsPage />} />
             <Route path="payouts" element={<PayoutsPage />} />
+            <Route path="users" element={<UsersPage />} />
+            <Route path="businesses" element={<BusinessesPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

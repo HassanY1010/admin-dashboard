@@ -22,7 +22,8 @@ import {
   UserCheck, 
   Key, 
   Send,
-  RefreshCcw
+  RefreshCcw,
+  Copy
 } from "lucide-react";
 import type { User } from "@/types/api";
 
@@ -77,7 +78,21 @@ export default function ConsumersPage() {
       render: (row) => (
         <div>
           <p className="font-medium">{row.fullName}</p>
-          <p className="text-xs text-muted-foreground">{row.email}</p>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span>{row.email}</span>
+            <span>•</span>
+            <span className="font-mono text-[10px] bg-muted px-1 rounded">{row.id.substring(0, 8)}...</span>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(row.id);
+                toast.success("تم نسخ معرّف المستخدم (User ID)");
+              }}
+              className="text-muted-foreground hover:text-foreground inline-flex items-center"
+              title="نسخ معرّف المستخدم (User ID)"
+            >
+              <Copy className="w-3 h-3" />
+            </button>
+          </div>
         </div>
       ),
     },

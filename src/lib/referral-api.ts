@@ -51,4 +51,5 @@ export const payoutsApi = {
 // ===================== REGIONS =====================
 export const regionsApi = {
   getAll: () => apiClient.get("/regions").then((r) => r.data),
+  create: (name: string) => apiClient.post("/regions", { name }).then((r) => r.data),
 };
