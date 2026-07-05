@@ -66,8 +66,9 @@ export function DataTable<T extends { id?: string }>({
         </form>
       )}
 
-      <div className="rounded-md border border-border overflow-x-auto">
-        <table className="w-full">
+      <div className="rounded-md border border-border overflow-hidden">
+        <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
+        <table className="w-full" style={{ minWidth: '600px' }}>
           <thead className="bg-muted">
             <tr>
               {columns.map((col) => (
@@ -123,6 +124,7 @@ export function DataTable<T extends { id?: string }>({
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {totalPages > 1 && onPageChange && (

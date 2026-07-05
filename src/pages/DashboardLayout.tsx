@@ -47,9 +47,8 @@ export default function DashboardLayout() {
   }
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar className={cn("fixed inset-y-0 right-0 z-40 w-64 transform transition-transform lg:static lg:transform-none", sidebarOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0")} />
-      
+    <div className="flex min-h-screen bg-muted/30">
+      {/* Overlay for mobile */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-30 lg:hidden"
@@ -57,9 +56,19 @@ export default function DashboardLayout() {
         />
       )}
 
-      <div className="flex-1 flex flex-col min-h-screen">
+      {/* Sidebar: fixed drawer on mobile, static on desktop */}
+      <Sidebar
+        className={cn(
+          "fixed inset-y-0 right-0 z-40 w-64 transition-transform duration-300 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:shrink-0",
+          sidebarOpen ? "translate-x-0" : "translate-x-full"
+        )}
+        onClose={() => setSidebarOpen(false)}
+      />
+
+      {/* Main content area — full width on mobile */}
+      <div className="flex-1 flex flex-col min-w-0 w-full">
         <Topbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-        <main className="flex-1 p-4 bg-muted/30">
+        <main className="flex-1 p-3 sm:p-4 overflow-x-hidden">
           <Outlet />
         </main>
       </div>

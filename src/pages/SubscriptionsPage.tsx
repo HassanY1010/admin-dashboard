@@ -129,7 +129,7 @@ export default function SubscriptionsPage() {
   ];
 
   return (
-    <div className="p-6">
+    <div className="p-3 sm:p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">طلبات التفعيل المعلقة</h1>
         <p className="text-muted-foreground">

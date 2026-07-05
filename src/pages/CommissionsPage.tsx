@@ -163,7 +163,7 @@ export default function CommissionsPage() {
   ];
 
   return (
-    <div className="p-6" dir="rtl">
+    <div className="p-3 sm:p-6" dir="rtl">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold">سجل العمولات</h1>

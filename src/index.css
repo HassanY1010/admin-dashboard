@@ -31,4 +31,26 @@
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
+  /* Prevent horizontal scrolling on the whole page */
+  overflow-x: hidden;
+}
+
+/* ─── Mobile Responsive Utilities ─── */
+
+/* Ensure images never overflow their containers */
+img, video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Scrollable tables on mobile */
+.table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Page-level containers should never overflow horizontally */
+#root {
+  overflow-x: hidden;
+  width: 100%;
 }

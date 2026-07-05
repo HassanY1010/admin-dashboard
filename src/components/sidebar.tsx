@@ -53,7 +53,7 @@ const navItems = [
   { href: "/dashboard/payouts", label: "صرف العمولات", icon: Landmark },
 ];
 
-export function Sidebar({ className }: { className?: string }) {
+export function Sidebar({ className, onClose }: { className?: string; onClose?: () => void }) {
   const pathname = useLocation().pathname;
   const logout = useAuthStore((state) => state.logout);
 
@@ -69,10 +69,12 @@ export function Sidebar({ className }: { className?: string }) {
   };
 
   return (
-    <aside className={cn("flex flex-col h-screen bg-white border-l border-border", className)}>
-      <div className="p-4 border-b border-border">
-        <h1 className="text-xl font-bold text-primary">حسابك في جيبك</h1>
-        <p className="text-sm text-muted-foreground">لوحة تحكم الإدارة</p>
+    <aside className={cn("flex flex-col h-screen bg-white border-l border-border overflow-y-auto", className)}>
+      <div className="p-4 border-b border-border flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-primary">حسابك في جيبك</h1>
+          <p className="text-sm text-muted-foreground">لوحة تحكم الإدارة</p>
+        </div>
       </div>
 
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
@@ -91,6 +93,7 @@ export function Sidebar({ className }: { className?: string }) {
               <Link
                 key={item.href}
                 to={item.href}
+                onClick={onClose}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                   isActive

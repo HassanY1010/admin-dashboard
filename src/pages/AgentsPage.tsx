@@ -236,7 +236,7 @@ export default function AgentsPage() {
   ];
 
   return (
-    <div className="p-6" dir="rtl">
+    <div className="p-3 sm:p-6" dir="rtl">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
         <div>
