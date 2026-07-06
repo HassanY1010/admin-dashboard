@@ -24,20 +24,23 @@ export function useRealtimeNotifications() {
   const [unreadCount, setUnreadCount] = useState(0);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  // Fetch initial unread count from server
+  // Fetch initial notifications and unread count from server
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const fetchInitialCount = async () => {
+    const fetchInitialData = async () => {
       try {
         const { count } = await adminApi.getNotificationsCount({ isRead: false });
         setUnreadCount(count);
+
+        const res = await adminApi.getNotifications({ limit: 10 });
+        setNotifications(res.data || []);
       } catch {
         // Silently fail — non-critical
       }
     };
 
-    fetchInitialCount();
+    fetchInitialData();
   }, [isAuthenticated]);
 
   useEffect(() => {

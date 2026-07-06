@@ -16,7 +16,7 @@ export function StatsCard({ title, value, icon: Icon, trend, className }: StatsC
   return (
     <div
       className={cn(
-        "flex flex-col p-4 bg-white rounded-lg border border-border",
+        "flex flex-col p-4 bg-card rounded-lg border border-border transition-colors",
         className
       )}
     >

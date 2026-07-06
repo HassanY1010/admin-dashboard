@@ -58,7 +58,7 @@ export default function MerchantsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ["merchants", page, search],
     queryFn: () => adminApi.getUsers({ page, limit: 10, search, userType: "business" }),
   });
@@ -318,7 +318,7 @@ export default function MerchantsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold">قائمة التجار</h2>
-        <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ["merchants"] })}>
+        <Button variant="outline" onClick={() => refetch()}>
           <RefreshCcw className="h-4 w-4 ml-2" />
           تحديث
         </Button>

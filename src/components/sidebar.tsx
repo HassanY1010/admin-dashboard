@@ -69,7 +69,7 @@ export function Sidebar({ className, onClose }: { className?: string; onClose?: 
   };
 
   return (
-    <aside className={cn("flex flex-col h-screen bg-white border-l border-border overflow-y-auto", className)}>
+    <aside className={cn("flex flex-col h-screen bg-card border-l border-border overflow-y-auto transition-colors", className)}>
       <div className="p-4 border-b border-border flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-primary">حسابك في جيبك</h1>
