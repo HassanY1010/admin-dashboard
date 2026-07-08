@@ -22,8 +22,8 @@ import adminApi from "@/lib/admin-api";
 
 const statusLabels: Record<string, { label: string; class: string }> = {
   ACTIVE:    { label: "نشط",     class: "bg-green-100 text-green-800" },
-  INACTIVE:  { label: "غير نشط", class: "bg-gray-100 text-gray-700"  },
-  SUSPENDED: { label: "موقوف",   class: "bg-red-100 text-red-800"    },
+  INACTIVE:  { label: "موقوف",   class: "bg-red-100 text-red-800"  },
+  BLOCKED:   { label: "محظور",   class: "bg-gray-100 text-gray-700"    },
 };
 
 export default function AgentsPage() {
@@ -119,7 +119,7 @@ export default function AgentsPage() {
   });
 
   const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: "ACTIVE" | "INACTIVE" | "SUSPENDED" }) =>
+    mutationFn: ({ id, status }: { id: string; status: "ACTIVE" | "INACTIVE" | "BLOCKED" }) =>
       agentsApi.setStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["agents"] });
@@ -214,7 +214,7 @@ export default function AgentsPage() {
               size="sm"
               variant="outline"
               className="text-orange-600 border-orange-300 hover:bg-orange-50"
-              onClick={() => statusMutation.mutate({ id: row.id, status: "SUSPENDED" })}
+              onClick={() => statusMutation.mutate({ id: row.id, status: "INACTIVE" })}
             >
               <ToggleLeft className="w-3.5 h-3.5 ml-1" />
               إيقاف

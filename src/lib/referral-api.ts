@@ -24,7 +24,7 @@ export const agentsApi = {
     }
   ) => apiClient.patch(`/agents/${id}/commission`, data).then((r) => r.data),
 
-  setStatus: (id: string, status: "ACTIVE" | "INACTIVE" | "SUSPENDED") =>
+  setStatus: (id: string, status: "ACTIVE" | "INACTIVE" | "BLOCKED") =>
     apiClient.patch(`/agents/${id}/status`, { status }).then((r) => r.data),
 };
 
