@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import adminApi from "@/lib/admin-api";
@@ -17,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { ResetPasswordDialog } from "@/components/ResetPasswordDialog";
 import {
   UserX,
   UserCheck,
@@ -39,6 +39,7 @@ const ROLE_OPTIONS = [
 
 export default function MerchantsPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showResetDialog, setShowResetDialog] = useState(false);
   const [showNotifyDialog, setShowNotifyDialog] = useState(false);
   const [notificationBody, setNotificationBody] = useState("");
   const [notificationTitle, setNotificationTitle] = useState("تنبيه من الإدارة");
@@ -71,17 +72,6 @@ export default function MerchantsPage() {
       toast.success("تم تحديث حالة المستخدم بنجاح");
     },
     onError: () => toast.error("فشل في تحديث الحالة"),
-  });
-
-  const resetPasswordMutation = useMutation({
-    mutationFn: (userId: string) => adminApi.resetUserPassword(userId),
-    onSuccess: (data) => {
-      toast.success(
-        `تم إعادة تعيين كلمة المرور. كلمة المرور المؤقتة: ${data.temporaryPassword || "تحقق من البريد"}`,
-        { duration: 8000 },
-      );
-    },
-    onError: () => toast.error("فشل في إعادة تعيين كلمة المرور"),
   });
 
   const extendSubscriptionMutation = useMutation({
@@ -239,11 +229,9 @@ export default function MerchantsPage() {
             size="sm"
             variant="outline"
             onClick={() => {
-              if (confirm("هل أنت متأكد من إعادة تعيين كلمة المرور لهذا التاجر؟")) {
-                resetPasswordMutation.mutate(row.id);
-              }
+              setSelectedUser(row);
+              setShowResetDialog(true);
             }}
-            disabled={resetPasswordMutation.isPending}
             title="إعادة تعيين كلمة المرور"
           >
             <Key className="h-4 w-4" />
@@ -483,6 +471,12 @@ export default function MerchantsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ResetPasswordDialog
+        open={showResetDialog}
+        onOpenChange={setShowResetDialog}
+        user={selectedUser}
+        onSuccess={refetch}
+      />
     </div>
   );
 }

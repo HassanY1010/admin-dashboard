@@ -57,8 +57,8 @@ const adminApi = {
     return data;
   },
 
-  async resetUserPassword(userId: string): Promise<any> {
-    const { data } = await apiClient.put(`/admin/users/${userId}/reset-password`);
+  async resetUserPassword(userId: string, options?: { customPassword?: string; forcePasswordChange?: boolean; expiryHours?: number }): Promise<any> {
+    const { data } = await apiClient.put(`/admin/users/${userId}/reset-password`, options);
     return data;
   },
 
