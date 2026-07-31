@@ -73,22 +73,30 @@ export default function AgentsPage() {
 
   // ── Mutations ──
   const createMutation = useMutation({
-    mutationFn: () =>
-      agentsApi.create({
+    mutationFn: () => {
+      const code = createForm.referralCode.trim()
+        ? createForm.referralCode.trim().toUpperCase()
+        : `REF-${Math.floor(100000 + Math.random() * 900000)}`;
+      const commVal = Number(createForm.commissionValue) > 0 ? Number(createForm.commissionValue) : 10;
+
+      return agentsApi.create({
         userId: createForm.userId.trim(),
-        referralCode: createForm.referralCode.trim().toUpperCase(),
+        referralCode: code,
         commissionType: createForm.commissionType,
-        commissionValue: Number(createForm.commissionValue),
+        commissionValue: commVal,
         regionId: createForm.regionId || undefined,
-      }),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["agents"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       setShowCreate(false);
       setCreateForm({ userId: "", referralCode: "", commissionType: "PERCENTAGE", commissionValue: "", regionId: "" });
-      toast.success("تم إنشاء حساب المندوب بنجاح");
+      toast.success("تم إضافة المندوب بنجاح وحفظ بياناته في القائمة");
     },
     onError: (e: any) => {
-      toast.error(e?.response?.data?.message || "فشل في إنشاء المندوب");
+      const msg = e?.response?.data?.message || e?.message || "فشل في حفظ المندوب، يرجى المحاولة مرة أخرى";
+      toast.error(msg);
     },
   });
 
@@ -300,9 +308,11 @@ export default function AgentsPage() {
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium mb-1 block">كود الإحالة</label>
+              <label className="text-sm font-medium mb-1 block">
+                كود الإحالة <span className="text-muted-foreground text-xs">(اختياري - يتم إنشاؤه تلقائياً)</span>
+              </label>
               <input
-                placeholder="مثال: HASSAN2024"
+                placeholder="مثال: HASSAN2024 (أو اتركه فارغاً)"
                 value={createForm.referralCode}
                 onChange={(e: any) => setCreateForm((f) => ({ ...f, referralCode: e.target.value }))}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -329,7 +339,7 @@ export default function AgentsPage() {
               <input
                 type="number"
                 min={0}
-                placeholder={createForm.commissionType === "PERCENTAGE" ? "مثال: 10" : "مثال: 500"}
+                placeholder={createForm.commissionType === "PERCENTAGE" ? "الافتراضي: 10" : "مثال: 500"}
                 value={createForm.commissionValue}
                 onChange={(e: any) => setCreateForm((f) => ({ ...f, commissionValue: e.target.value }))}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -360,14 +370,9 @@ export default function AgentsPage() {
             </Button>
             <Button
               onClick={() => createMutation.mutate()}
-              disabled={
-                createMutation.isPending ||
-                !createForm.userId ||
-                !createForm.referralCode ||
-                !createForm.commissionValue
-              }
+              disabled={createMutation.isPending || !createForm.userId}
             >
-              {createMutation.isPending ? "جاري الحفظ..." : "إضافة المندوب"}
+              {createMutation.isPending ? "جاري الحفظ..." : "حفظ المندوب"}
             </Button>
           </DialogFooter>
         </DialogContent>
