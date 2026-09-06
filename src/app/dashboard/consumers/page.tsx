@@ -23,7 +23,8 @@ import {
   Key, 
   Send,
   RefreshCcw,
-  Copy
+  Copy,
+  Trash2
 } from "lucide-react";
 import type { User } from "@/types/api";
 
@@ -33,6 +34,10 @@ export default function ConsumersPage() {
   const [showNotifyDialog, setShowNotifyDialog] = useState(false);
   const [notificationBody, setNotificationBody] = useState("");
   const [notificationTitle, setNotificationTitle] = useState("تنبيه من الإدارة");
+
+  // Delete User
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
@@ -62,6 +67,17 @@ export default function ConsumersPage() {
       toast.success("تم إرسال الإشعار بنجاح");
     },
     onError: () => toast.error("فشل في إرسال الإشعار"),
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: (userId: string) => adminApi.deleteUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["consumers"] });
+      setShowDeleteDialog(false);
+      setUserToDelete(null);
+      toast.success("تم حذف المستهلك نهائياً");
+    },
+    onError: () => toast.error("فشل في حذف المستهلك"),
   });
 
   const columns: Column<User>[] = [
@@ -161,6 +177,20 @@ export default function ConsumersPage() {
           >
             <Send className="h-4 w-4" />
           </Button>
+
+          {/* Delete User */}
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-red-700 border-red-300 hover:bg-red-50"
+            onClick={() => {
+              setUserToDelete(row);
+              setShowDeleteDialog(true);
+            }}
+            title="حذف المستهلك نهائياً"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       ),
     },
@@ -226,6 +256,31 @@ export default function ConsumersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete User Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-700">⚠️ حذف مستهلك نهائياً</DialogTitle>
+            <DialogDescription>
+              هل أنت متأكد من رغبتك في حذف المستهلك <strong>{userToDelete?.fullName}</strong> ({userToDelete?.email}) نهائياً؟
+              <br />
+              <span className="text-red-600 font-medium">هذا الإجراء لا يمكن التراجع عنه.</span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>إلغاء</Button>
+            <Button
+              className="bg-red-700 hover:bg-red-800"
+              onClick={() => userToDelete && deleteUserMutation.mutate(userToDelete.id)}
+              disabled={deleteUserMutation.isPending}
+            >
+              {deleteUserMutation.isPending ? "جاري الحذف..." : "حذف نهائياً"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <ResetPasswordDialog
         open={showResetDialog}
         onOpenChange={setShowResetDialog}

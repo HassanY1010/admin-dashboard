@@ -1,32 +1,27 @@
 import axios, { AxiosError } from "axios";
 import { useAuthStore } from "./auth-store";
 
-const BASE_URLS = [
-  (import.meta as any).env.VITE_API_URL || "https://sales-app-backend-jhxe.onrender.com",
-  "http://localhost:3000",
-];
+const PRIMARY_URL =
+  (import.meta as any).env.VITE_API_URL || "https://sales-app-backend-jhxe.onrender.com";
 
-let currentUrlIndex = 0;
 let isRefreshing = false;
 
 export const apiClient = axios.create({
-  baseURL: `${BASE_URLS[currentUrlIndex]}/api/v1`,
+  baseURL: `${PRIMARY_URL}/api/v1`,
   headers: {
     "Content-Type": "application/json",
     "x-csrf-protection": "1",
   },
-  timeout: 5000,
+  timeout: 30000, // 30s allows cloud servers (e.g. Render spin-up) to wake up cleanly without timing out
   withCredentials: true,
 });
 
-const rotateBaseUrl = () => {
-  currentUrlIndex = (currentUrlIndex + 1) % BASE_URLS.length;
-  apiClient.defaults.baseURL = `${BASE_URLS[currentUrlIndex]}/api/v1`;
-  return BASE_URLS[currentUrlIndex];
-};
-
 function unwrapResponse(response: any) {
-  if (response.data && response.data.success === true && Object.prototype.hasOwnProperty.call(response.data, "data")) {
+  if (
+    response.data &&
+    response.data.success === true &&
+    Object.prototype.hasOwnProperty.call(response.data, "data")
+  ) {
     response.data = response.data.data;
   }
   return response;
@@ -44,9 +39,9 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const config = error.config as any;
 
+    // Retry once for network hiccups or cold-start timeouts
     if ((!error.response || error.code === "ECONNABORTED") && config && !config._isRetry) {
       config._isRetry = true;
-      rotateBaseUrl();
       return apiClient(config);
     }
 
@@ -72,3 +67,4 @@ apiClient.interceptors.response.use(
 );
 
 export default apiClient;
+
