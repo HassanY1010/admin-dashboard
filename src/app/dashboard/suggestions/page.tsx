@@ -1,6 +1,5 @@
-"use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import adminApi from "@/lib/admin-api";
 import { 
@@ -25,6 +24,8 @@ import {
 import { toast } from "sonner";
 
 export default function SuggestionsPage() {
+  const [searchParams] = useSearchParams();
+  const suggestionIdFromUrl = searchParams.get("id");
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<string>("");
   const [search, setSearch] = useState("");
@@ -36,6 +37,17 @@ export default function SuggestionsPage() {
     queryKey: ["suggestions", page, status, search],
     queryFn: () => adminApi.getSuggestions({ page, limit: 10, status, search }),
   });
+
+  // Auto-open suggestion details if navigated from notification with ?id=
+  useEffect(() => {
+    if (suggestionIdFromUrl && data?.data) {
+      const match = data.data.find((item: any) => item.id === suggestionIdFromUrl);
+      if (match) {
+        setSelectedSuggestion(match);
+        setShowDetailDialog(true);
+      }
+    }
+  }, [suggestionIdFromUrl, data]);
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) => 

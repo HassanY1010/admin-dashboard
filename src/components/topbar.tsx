@@ -108,7 +108,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                       title = "طلب تفعيل اشتراك معلق";
                       body = `المستخدم: ${n.user?.fullName} | المبلغ: ${Number(n.amount).toLocaleString()} ريال (${n.wallet})`;
                     } else if (n.content) {
-                      path = "/dashboard/suggestions";
+                      path = n.id ? `/dashboard/suggestions?id=${n.id}` : "/dashboard/suggestions";
                       title = "شكوى/اقتراح جديد";
                       body = `من: ${n.user?.fullName} | ${n.content}`;
                     }
