@@ -31,6 +31,7 @@ export default function SuggestionsPage() {
   const [search, setSearch] = useState("");
   const [selectedSuggestion, setSelectedSuggestion] = useState<any>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [isFetchingDetail, setIsFetchingDetail] = useState(false);
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -40,13 +41,40 @@ export default function SuggestionsPage() {
 
   // Auto-open suggestion details if navigated from notification with ?id=
   useEffect(() => {
-    if (suggestionIdFromUrl && data?.data) {
+    if (!suggestionIdFromUrl) return;
+
+    // 1. Try to find the item in currently loaded data first
+    if (data?.data) {
       const match = data.data.find((item: any) => item.id === suggestionIdFromUrl);
       if (match) {
         setSelectedSuggestion(match);
         setShowDetailDialog(true);
+        return;
       }
     }
+
+    // 2. If not found in current page/filter, fetch directly by ID from backend
+    let isMounted = true;
+    setIsFetchingDetail(true);
+    adminApi.getSuggestionById(suggestionIdFromUrl)
+      .then((suggestion) => {
+        if (isMounted && suggestion) {
+          setSelectedSuggestion(suggestion);
+          setShowDetailDialog(true);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          toast.error("تعذر العثور على الشكوى أو الاقتراح المطلوب");
+        }
+      })
+      .finally(() => {
+        if (isMounted) setIsFetchingDetail(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [suggestionIdFromUrl, data]);
 
   const updateStatusMutation = useMutation({
@@ -202,24 +230,29 @@ export default function SuggestionsPage() {
           <DialogHeader>
             <DialogTitle>تفاصيل الشكوى/الاقتراح</DialogTitle>
             <DialogDescription>
-              مرسل من: {selectedSuggestion?.user.fullName}
+              مرسل من: {selectedSuggestion?.user?.fullName || "مستخدم"} {selectedSuggestion?.user?.business?.name ? `(${selectedSuggestion.user.business.name})` : ""}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4 text-right">
-            <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">نص الرسالة</label>
-              <div className="p-3 bg-muted rounded-md text-sm whitespace-pre-wrap">
-                {selectedSuggestion?.content}
-              </div>
+          {isFetchingDetail && !selectedSuggestion ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              جاري تحميل تفاصيل الشكوى...
             </div>
+          ) : (
+            <div className="space-y-4 py-4 text-right">
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">نص الرسالة</label>
+                <div className="p-3 bg-muted rounded-md text-sm whitespace-pre-wrap">
+                  {selectedSuggestion?.content || "لا يوجد محتوى"}
+                </div>
+              </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground">رقم الهاتف</label>
                 <div className="flex items-center gap-2 text-sm">
                   <Phone className="w-4 h-4 text-primary" />
-                  {selectedSuggestion?.user.phoneNumber}
+                  {selectedSuggestion?.user?.phoneNumber || "غير متوفر"}
                 </div>
               </div>
               <div className="space-y-1">
@@ -272,6 +305,7 @@ export default function SuggestionsPage() {
               </div>
             </div>
           </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

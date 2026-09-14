@@ -203,6 +203,11 @@ const adminApi = {
     return data;
   },
 
+  async getSuggestionById(id: string): Promise<Suggestion> {
+    const { data } = await apiClient.get(`/admin/suggestions/${id}`);
+    return data;
+  },
+
   async updateSuggestionStatus(id: string, status: string): Promise<Suggestion> {
     const { data } = await apiClient.put(`/admin/suggestions/${id}/status`, { status });
     return data;

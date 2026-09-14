@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import adminApi from "../lib/admin-api";
 import { DataTable, Column } from "../components/data-table";
 import { formatDate } from "../lib/utils";
@@ -114,17 +115,36 @@ export default function NotificationsPage() {
     {
       key: "title",
       header: "العنوان",
-      render: (row) => (
-        <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-full ${row.isRead ? 'bg-muted' : 'bg-primary/10'}`}>
-            <Bell className={`w-4 h-4 ${row.isRead ? 'text-muted-foreground' : 'text-primary'}`} />
+      render: (row) => {
+        const meta = row.metadata || row.data || {};
+        const notifType = String(row.type || meta.type || meta.entityType || "").toLowerCase();
+        const isSuggestion = notifType.includes("suggestion") || notifType.includes("complaint");
+        const suggestionId = meta.entityId || meta.suggestionId || meta.recordId;
+        const targetRoute = isSuggestion && suggestionId
+          ? `/dashboard/suggestions?id=${suggestionId}`
+          : meta.route;
+
+        const content = (
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-full ${row.isRead ? 'bg-muted' : 'bg-primary/10'}`}>
+              <Bell className={`w-4 h-4 ${row.isRead ? 'text-muted-foreground' : 'text-primary'}`} />
+            </div>
+            <div>
+              <p className="font-medium">{row.title}</p>
+              <p className="text-xs text-muted-foreground line-clamp-1">{row.body}</p>
+            </div>
           </div>
-          <div>
-            <p className="font-medium">{row.title}</p>
-            <p className="text-xs text-muted-foreground line-clamp-1">{row.body}</p>
-          </div>
-        </div>
-      ),
+        );
+
+        if (targetRoute) {
+          return (
+            <Link to={targetRoute} className="hover:opacity-80 transition-opacity block">
+              {content}
+            </Link>
+          );
+        }
+        return content;
+      },
     },
     {
       key: "createdAt",

@@ -103,14 +103,21 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                     let title = n.title || "إشعار جديد";
                     let body = n.body || "";
 
+                    const meta = n.metadata || n.data || {};
+                    const notifType = String(n.type || meta.type || meta.entityType || "").toLowerCase();
+                    const isSuggestion = notifType.includes("suggestion") || notifType.includes("complaint") || Boolean(n.content);
+                    const suggestionId = meta.entityId || meta.suggestionId || meta.recordId || (n.content ? n.id : null);
+
                     if (n.wallet) {
                       path = "/dashboard/subscriptions";
                       title = "طلب تفعيل اشتراك معلق";
-                      body = `المستخدم: ${n.user?.fullName} | المبلغ: ${Number(n.amount).toLocaleString()} ريال (${n.wallet})`;
-                    } else if (n.content) {
-                      path = n.id ? `/dashboard/suggestions?id=${n.id}` : "/dashboard/suggestions";
-                      title = "شكوى/اقتراح جديد";
-                      body = `من: ${n.user?.fullName} | ${n.content}`;
+                      body = `المستخدم: ${n.user?.fullName || "مستخدم"} | المبلغ: ${Number(n.amount).toLocaleString()} ريال (${n.wallet})`;
+                    } else if (isSuggestion) {
+                      path = suggestionId ? `/dashboard/suggestions?id=${suggestionId}` : "/dashboard/suggestions";
+                      title = n.title || "شكوى/اقتراح جديد";
+                      body = n.body || (n.content ? `من: ${n.user?.fullName || "مستخدم"} | ${n.content}` : "");
+                    } else if (meta.route) {
+                      path = meta.route;
                     }
 
                     return (
