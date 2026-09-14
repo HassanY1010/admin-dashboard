@@ -169,11 +169,11 @@ export default function SuggestionsPage() {
               data?.data.map((item) => (
                 <tr key={item.id} className="hover:bg-muted/50 transition-colors">
                   <td className="px-4 py-4">
-                    <div className="font-medium">{item.user.fullName}</div>
-                    <div className="text-xs text-muted-foreground">{item.user.business?.name || "بدون اسم عمل"}</div>
+                    <div className="font-medium">{item.user?.fullName || "مستخدم"}</div>
+                    <div className="text-xs text-muted-foreground">{item.user?.business?.name || "بدون اسم عمل"}</div>
                   </td>
                   <td className="px-4 py-4">
-                    {item.user.userType === "business" ? "تاجر" : "مستهلك"}
+                    {item.user?.userType === "business" ? "تاجر" : "مستهلك"}
                   </td>
                   <td className="px-4 py-4 max-w-xs truncate">
                     {item.content}

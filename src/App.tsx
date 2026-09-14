@@ -25,11 +25,14 @@ import PayoutsPage from './pages/PayoutsPage';
 import UsersPage from './pages/UsersPage';
 import BusinessesPage from './pages/BusinessesPage';
 
+import { Toaster } from "sonner";
+
 const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <Toaster position="top-center" richColors />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
