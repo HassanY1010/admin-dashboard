@@ -17,7 +17,19 @@ import {
 import { format } from "date-fns";
 import { arSA } from "date-fns/locale";
 import { toast } from "sonner";
-import { UserPlus, Edit, ToggleLeft, ToggleRight, Copy, Building2, MapPin, Plus } from "lucide-react";
+import {
+  UserPlus,
+  Edit,
+  ToggleLeft,
+  ToggleRight,
+  Copy,
+  Building2,
+  MapPin,
+  Plus,
+  Users,
+  CheckCircle2,
+  Banknote,
+} from "lucide-react";
 import adminApi from "@/lib/admin-api";
 
 const statusLabels: Record<string, { label: string; class: string }> = {
@@ -31,6 +43,9 @@ export default function AgentsPage() {
 
   // ── Filters ──
   const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  // ── Agent Details / Customers Dialog ──
+  const [viewDetailsAgent, setViewDetailsAgent] = useState<any>(null);
 
   // ── Create Agent Dialog ──
   const [showCreate, setShowCreate] = useState(false);
@@ -58,6 +73,18 @@ export default function AgentsPage() {
     queryKey: ["agents", statusFilter],
     queryFn: () =>
       agentsApi.getAll(statusFilter !== "all" ? { status: statusFilter } : undefined),
+  });
+
+  const { data: agentMetrics, isLoading: loadingMetrics } = useQuery({
+    queryKey: ["agent-dashboard", viewDetailsAgent?.id],
+    queryFn: () => agentsApi.getDashboard(viewDetailsAgent.id),
+    enabled: !!viewDetailsAgent?.id,
+  });
+
+  const { data: agentCustomers = [], isLoading: loadingCustomers } = useQuery({
+    queryKey: ["agent-customers", viewDetailsAgent?.id],
+    queryFn: () => agentsApi.getCustomers(viewDetailsAgent.id),
+    enabled: !!viewDetailsAgent?.id,
   });
 
   const { data: regions = [] } = useQuery({
@@ -202,6 +229,15 @@ export default function AgentsPage() {
       header: "الإجراءات",
       render: (row: any) => (
         <div className="flex gap-2 flex-wrap">
+          <Button
+            size="sm"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            onClick={() => setViewDetailsAgent(row)}
+          >
+            <Users className="w-3.5 h-3.5 ml-1" />
+            العملاء والعمولات
+          </Button>
+
           <Button
             size="sm"
             variant="outline"
@@ -486,6 +522,201 @@ export default function AgentsPage() {
 
           <DialogFooter>
             <Button onClick={() => setShowRegions(false)}>إغلاق</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── View Agent Details & Customers Dialog ── */}
+      <Dialog open={!!viewDetailsAgent} onOpenChange={(open) => !open && setViewDetailsAgent(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Users className="w-5 h-5 text-indigo-600" />
+              تفاصيل وإحصائيات المندوب: {viewDetailsAgent?.user?.fullName}
+            </DialogTitle>
+            <DialogDescription className="flex items-center gap-4 text-xs pt-1 flex-wrap">
+              <span>كود الإحالة: <strong className="font-mono text-primary">{viewDetailsAgent?.referralCode}</strong></span>
+              <span>الهاتف: {viewDetailsAgent?.user?.phoneNumber}</span>
+              <span>
+                العمولة المقررة:{" "}
+                <strong>
+                  {viewDetailsAgent?.commissionValue}
+                  {viewDetailsAgent?.commissionType === "PERCENTAGE" ? "%" : " ريال ثابت"}
+                </strong>
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingMetrics || loadingCustomers ? (
+            <div className="py-12 text-center text-muted-foreground text-sm">
+              جاري تحميل إحصائيات وعملاء المندوب...
+            </div>
+          ) : (
+            <div className="space-y-6 py-2">
+              {/* ── KPI Cards Grid ── */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="bg-slate-50 border rounded-lg p-3 text-center">
+                  <div className="text-xs text-muted-foreground mb-1">إجمالي العملاء</div>
+                  <div className="text-xl font-bold text-slate-800">
+                    {agentMetrics?.totalCustomers || 0}
+                  </div>
+                </div>
+
+                <div className="bg-green-50/60 border border-green-200 rounded-lg p-3 text-center">
+                  <div className="text-xs text-green-700 font-medium mb-1">المسددون للاشتراك</div>
+                  <div className="text-xl font-bold text-green-700">
+                    {agentMetrics?.paidCustomersCount || 0}
+                  </div>
+                </div>
+
+                <div className="bg-amber-50/60 border border-amber-200 rounded-lg p-3 text-center">
+                  <div className="text-xs text-amber-700 font-medium mb-1">غير المسددين</div>
+                  <div className="text-xl font-bold text-amber-700">
+                    {agentMetrics?.unpaidCustomersCount || 0}
+                  </div>
+                </div>
+
+                <div className="bg-blue-50/60 border border-blue-200 rounded-lg p-3 text-center">
+                  <div className="text-xs text-blue-700 font-medium mb-1">اشتراكات محصلة</div>
+                  <div className="text-base font-bold text-blue-800">
+                    {Number(agentMetrics?.totalSubscriptionsPaidAmount || 0).toLocaleString()} ﷼
+                  </div>
+                </div>
+
+                <div className="bg-orange-50/60 border border-orange-200 rounded-lg p-3 text-center">
+                  <div className="text-xs text-orange-700 font-medium mb-1">عمولات مستحقة</div>
+                  <div className="text-base font-bold text-orange-700">
+                    {Number(agentMetrics?.pendingAmount || (Number(agentMetrics?.totalEarned || 0) - Number(agentMetrics?.paidAmount || 0)) || 0).toLocaleString()} ﷼
+                  </div>
+                </div>
+
+                <div className="bg-emerald-50/60 border border-emerald-200 rounded-lg p-3 text-center">
+                  <div className="text-xs text-emerald-700 font-medium mb-1">عمولات مدفوعة</div>
+                  <div className="text-base font-bold text-emerald-700">
+                    {Number(agentMetrics?.paidAmount || 0).toLocaleString()} ﷼
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Customers List Section ── */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-bold text-sm flex items-center gap-2">
+                    <Users className="w-4 h-4 text-primary" />
+                    العملاء المسجلون من جهة المندوب ({agentCustomers.length})
+                  </h3>
+                  <span className="text-xs text-muted-foreground">
+                    العملاء الذين استخدموا كود الإحالة {viewDetailsAgent?.referralCode}
+                  </span>
+                </div>
+
+                {agentCustomers.length === 0 ? (
+                  <div className="p-8 text-center bg-muted/30 border rounded-lg text-sm text-muted-foreground">
+                    لم يقم أي عميل بالتسجيل من جهة هذا المندوب حتى الآن.
+                  </div>
+                ) : (
+                  <div className="border rounded-lg overflow-x-auto">
+                    <table className="w-full text-right text-sm">
+                      <thead className="bg-muted/50 border-b text-xs text-muted-foreground">
+                        <tr>
+                          <th className="p-3">اسم العميل / المتجر</th>
+                          <th className="p-3">رقم الهاتف</th>
+                          <th className="p-3">تاريخ التسجيل</th>
+                          <th className="p-3 text-center">حالة الاشتراك</th>
+                          <th className="p-3 text-center">الاشتراك المسدد</th>
+                          <th className="p-3 text-center">العمولة المستحقة</th>
+                          <th className="p-3 text-center">حالة العمولة</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {agentCustomers.map((cust: any) => {
+                          const hasPaid = cust.hasPaidSubscription === true;
+                          const commPaid = cust.commissionStatus === 'PAID';
+                          const commDue = (cust.commissionStatus === 'PENDING' || cust.commissionStatus === 'APPROVED' || hasPaid) && !commPaid;
+
+                          return (
+                            <tr key={cust.id} className="hover:bg-muted/20">
+                              <td className="p-3">
+                                <div className="font-semibold text-foreground">
+                                  {cust.customerName || cust.fullName}
+                                </div>
+                                {cust.businessName && cust.businessName !== (cust.customerName || cust.fullName) && (
+                                  <div className="text-xs text-muted-foreground">
+                                    {cust.businessName}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="p-3 font-mono text-xs">{cust.phoneNumber || '-'}</td>
+                              <td className="p-3 text-xs text-muted-foreground">
+                                {cust.createdAt
+                                  ? format(new Date(cust.createdAt), "dd MMM yyyy", { locale: arSA })
+                                  : "-"}
+                              </td>
+                              <td className="p-3 text-center">
+                                {hasPaid ? (
+                                  <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                                    <CheckCircle2 className="w-3 h-3 ml-1 text-green-600 inline" />
+                                    مشترك (مدفوع)
+                                  </Badge>
+                                ) : (
+                                  <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-100">
+                                    مجاني (غير مدفوع)
+                                  </Badge>
+                                )}
+                              </td>
+                              <td className="p-3 text-center font-medium">
+                                {Number(cust.paidSubscriptionAmount || 0) > 0 ? (
+                                  <span className="text-indigo-700">
+                                    {Number(cust.paidSubscriptionAmount).toLocaleString()} ﷼
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground">-</span>
+                                )}
+                              </td>
+                              <td className="p-3 text-center font-bold">
+                                {Number(cust.commissionAmount || 0) > 0 ? (
+                                  <span className={commPaid ? "text-green-600" : "text-orange-600"}>
+                                    {Number(cust.commissionAmount).toLocaleString()} ﷼
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground">-</span>
+                                )}
+                              </td>
+                              <td className="p-3 text-center">
+                                {commPaid ? (
+                                  <Badge className="bg-emerald-100 text-emerald-800">
+                                    مدفوعة للمندوب
+                                  </Badge>
+                                ) : commDue ? (
+                                  <Badge className="bg-orange-100 text-orange-800 animate-pulse">
+                                    مستحقة الصرف
+                                  </Badge>
+                                ) : (
+                                  <Badge className="bg-gray-100 text-gray-500">
+                                    غير مستحقة (لم يسدد)
+                                  </Badge>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex justify-between items-center sm:justify-between w-full">
+            <a
+              href="/payouts"
+              className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:underline font-medium"
+            >
+              <Banknote className="w-4 h-4" />
+              الانتقال إلى صفحة صرف العمولات
+            </a>
+            <Button onClick={() => setViewDetailsAgent(null)}>إغلاق</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

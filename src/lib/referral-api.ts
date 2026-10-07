@@ -26,6 +26,12 @@ export const agentsApi = {
 
   setStatus: (id: string, status: "ACTIVE" | "INACTIVE" | "BLOCKED") =>
     apiClient.patch(`/agents/${id}/status`, { status }).then((r) => r.data),
+
+  getDashboard: (id: string) =>
+    apiClient.get(`/agents/${id}/dashboard`).then((r) => r.data),
+
+  getCustomers: (id: string) =>
+    apiClient.get(`/agents/${id}/customers`).then((r) => r.data),
 };
 
 // ===================== COMMISSIONS =====================
